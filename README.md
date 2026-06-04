@@ -7,7 +7,7 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 - プロジェクト知識・規約: [CLAUDE.md](CLAUDE.md)
 - マイルストーン・Go/No-go ゲート: [TODO.md](TODO.md)
 
-> このリポジトリは [research-project-template](https://github.com/{{GITHUB_REPO}}) から生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。
+> このリポジトリは [research-project-template](https://github.com/uribo/research-project-template) テンプレートから生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。
 
 ## 前提ツール
 
