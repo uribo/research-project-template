@@ -1,0 +1,9 @@
+# Copy this file to .Renviron (gitignored) and fill in real values.
+# NEVER commit credentials, API keys, or service-account paths.
+
+# Contact email used in the HTTP User-Agent for polite API access.
+CONTACT_EMAIL={{CONTACT_EMAIL}}
+
+# Example secrets (uncomment and set as needed):
+# SOME_API_KEY=
+# GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json

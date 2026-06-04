@@ -1,0 +1,29 @@
+Package: researchproject
+Title: {{PROJECT_NAME}}
+Version: 0.0.0.9000
+Authors@R:
+    person("{{AUTHOR}}", email = "{{CONTACT_EMAIL}}", role = c("aut", "cre"))
+Description: {{PROJECT_DESCRIPTION}}
+Note: This DESCRIPTION is a dependency manifest for an analysis project, not
+    an installable R package. Do not run R CMD check / R CMD build. renv::init()
+    and renv::snapshot() read Imports/Suggests to resolve project dependencies.
+Encoding: UTF-8
+Imports:
+    targets,
+    tarchetypes,
+    dplyr,
+    tidyr,
+    purrr,
+    readr,
+    tibble,
+    stringr,
+    pointblank,
+    withr
+Suggests:
+    crew,
+    mirai,
+    gittargets,
+    quarto,
+    ggplot2,
+    scales,
+    testthat

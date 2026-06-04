@@ -1,0 +1,11 @@
+# air configuration — https://posit-dev.github.io/air/
+# air also respects .gitignore, so generated/dependency directories are
+# excluded both here and via .gitignore.
+[format]
+line-width = 80
+exclude = [
+    "renv/",
+    "_targets/",
+    ".quarto/",
+    "notes/*_files/",
+]

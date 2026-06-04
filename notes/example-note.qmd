@@ -1,0 +1,26 @@
+---
+title: "Example analysis note — {{PROJECT_NAME}}"
+format: html
+---
+
+```{r setup}
+#| include: false
+targets::tar_load(example_summary)
+
+n_species <- nrow(example_summary)
+n_obs <- sum(example_summary$n_obs)
+```
+
+This note demonstrates the **Data Reference Policy**: every reported number is
+pulled from the `targets` pipeline via `tar_load()` and interpolated inline —
+never hard-coded in the prose.
+
+We analyzed `r scales::comma(n_obs)` observations across `r n_species`
+species.
+
+```{r table}
+#| echo: false
+example_summary
+```
+
+Replace this note with your own analysis (see `SETUP.md`, step 8).

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "respectGitignore": false,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath'); echo \"$FILE\" | grep -iqE '\\.(R|r|qmd)$' && command -v air >/dev/null 2>&1 && air format \"$FILE\" 2>&1 || true",
+            "timeout": 30,
+            "statusMessage": "Running air format..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v Rscript >/dev/null 2>&1 && Rscript -e 'if (file.exists(\"renv/activate.R\") && requireNamespace(\"renv\", quietly = TRUE)) { status <- renv::status(); if (!isTRUE(status$synchronized)) message(\"renv drift detected: run renv::status() for details\") }' 2>&1 || true",
+            "timeout": 30,
+            "statusMessage": "Checking renv status..."
+          }
+        ]
+      }
+    ]
+  },
+  "model": "opus",
+  "language": "Use Japanese for chat conversations, English for writing files",
+  "alwaysThinkingEnabled": true
+}
