@@ -37,23 +37,14 @@ Rscript -e 'targets::tar_make()'
 # 定義の検証
 Rscript -e 'targets::tar_validate()'
 
-# テスト
+# テスト（非 package プロジェクト: tests/testthat/setup.R が R/ を source して実行）
 Rscript tests/testthat.R
 
 # ノート・原稿のレンダー（Quarto CLI が必要）
 quarto render notes/
+quarto render paper/
 ```
 
 ## ディレクトリ
 
-| パス | 内容 |
-|---|---|
-| `_targets.R` | パイプライン定義 |
-| `R/` | 関数定義（副作用なし） |
-| `data-raw/` | 不変の生データ（gitignore） |
-| `data/` | 中間処理データ（gitignore） |
-| `notes/` | 探索的分析ノート（Quarto） |
-| `paper/` | 原稿（Quarto） |
-| `tests/` | testthat |
-| `memory/` | Claude Code 会話間引き継ぎ知識 |
-| `prompts/` | Claude Code 作業ログ |
+構成と各ディレクトリの役割は [CLAUDE.md](CLAUDE.md)「ディレクトリ構成」を参照。

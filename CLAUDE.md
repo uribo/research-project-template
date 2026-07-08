@@ -236,22 +236,13 @@ updated: （YYYY-MM-DD）
 
 ## 共通コマンド
 
-```bash
-# パイプライン全体実行
-Rscript -e 'targets::tar_make()'
+セットアップ・実行コマンドの一次ソースは [README.md](README.md)（「セットアップ」「実行」）。ここには README にない補助コマンドのみを置く。
 
-# パイプライン定義の検証 / グラフ確認
-Rscript -e 'targets::tar_validate()'
+```bash
+# パイプライングラフ確認
 Rscript -e 'targets::tar_visnetwork()'
 
-# テスト（非 package プロジェクト: tests/testthat.R が R/ を source して実行）
-Rscript tests/testthat.R
-
-# 分析ノート・原稿のレンダリング（Quarto CLI 必要）
-quarto render notes/
-quarto render paper/
-
-# フォーマット
+# フォーマット（通常は編集時 hook で自動実行される）
 air format .
 ```
 
