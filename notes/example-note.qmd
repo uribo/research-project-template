@@ -24,3 +24,14 @@ example_summary
 ```
 
 Replace this note with your own analysis (see `SETUP.md`, step 8).
+
+## Session information
+
+Recording the environment in the rendered output makes the note
+self-documenting: the R version, platform, and package versions that produced
+these numbers travel with the artefact.
+
+```{r session-info}
+#| echo: false
+sessioninfo::session_info()
+```
