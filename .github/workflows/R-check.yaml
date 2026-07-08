@@ -1,5 +1,7 @@
-# CI for the analysis project. Installs dependencies from DESCRIPTION via pak
-# (no renv.lock required), validates the targets pipeline, and runs tests.
+# CI for the analysis project. Dependencies are discovered by scanning the
+# code with renv::dependencies() (library() calls and pkg::fun() usage), so no
+# dependency manifest is needed. Packages install as binaries via the public
+# Posit Package Manager.
 #
 # Quarto is intentionally NOT rendered here: the example pipeline omits the
 # Quarto target when the Quarto CLI is absent, keeping CI light and portable.
@@ -27,9 +29,14 @@ jobs:
         with:
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          dependencies: '"all"'
+      - name: Install dependencies discovered from code
+        run: |
+          Rscript -e 'install.packages("renv")'
+          Rscript -e '
+            deps <- unique(renv::dependencies(quiet = TRUE)$Package)
+            message("Discovered dependencies: ", paste(sort(deps), collapse = ", "))
+            install.packages(setdiff(deps, rownames(installed.packages())))
+          '
 
       - name: Validate targets pipeline
         run: Rscript -e 'targets::tar_validate()'

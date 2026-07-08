@@ -4,12 +4,7 @@
 
 ## 0. 前提ツール
 
-| ツール | 確認 |
-|---|---|
-| R (≥ 4.5) | `Rscript --version` |
-| renv | `Rscript -e 'packageVersion("renv")'` |
-| air | `air --version` |
-| Quarto CLI | `quarto --version` |
+[README.md](README.md)「前提ツール」の表を参照し、各確認コマンドが通ることを確かめる。
 
 ## 1. テンプレートを複製（`.git` を含めない）
 
@@ -38,11 +33,10 @@ git -C research-project-template archive HEAD | tar -x -C {{PROJECT_SLUG}}/
 | `{{PROJECT_SLUG}}` | ディレクトリ / repo 名 |
 | `{{PROJECT_DESCRIPTION}}` | 1–2 行の概要 |
 | `{{GITHUB_REPO}}` | `owner/repo` |
-| `{{AUTHOR}}` | 著者名 |
 | `{{CONTACT_EMAIL}}` | 連絡先メール |
 | `{{DATE}}` | 作成日（JST、`TZ=Asia/Tokyo date '+%Y-%m-%d'`） |
 
-置換対象ファイル: `CLAUDE.md`, `README.md`, `TODO.md`, `DESCRIPTION`, `Renviron.example`, `memory/*.md`, `notes/example-note.qmd`。
+置換対象ファイル: `CLAUDE.md`, `README.md`, `TODO.md`, `Renviron.example`, `memory/*.md`, `notes/example-note.qmd`。
 
 `Renviron.example` は先頭ドットなしで同梱している。手順 5 の前に `cp Renviron.example .Renviron` でコピーし、実値を記入する（`.Renviron` は gitignore 済み）。
 
@@ -60,11 +54,13 @@ rg '\{\{[A-Z_]+\}\}' --glob '!SETUP.md' || echo "no placeholders remaining"
 ## 4. renv の初期化
 
 ```bash
-# DESCRIPTION の Imports/Suggests を拾って依存を解決
+# コード走査（renv::dependencies()）で library() / pkg::fun() から依存を解決
 Rscript -e 'renv::init()'
 # 追加パッケージを入れたら
 Rscript -e 'renv::snapshot()'
 ```
+
+依存マニフェスト（`DESCRIPTION`）は使わない。名前空間プレフィックス規約（`dplyr::filter()` 等）に従っていれば依存は自動検出される。詳細は `CLAUDE.md`「R パッケージ管理（renv）」を参照。
 
 ## 5. バージョン管理の初期化
 
@@ -77,7 +73,7 @@ git commit -m "chore: initialize project from research-project-template"
 
 ## 6. CI の有効化
 
-`.github/workflows/R-check.yaml` は `DESCRIPTION` から依存を解決するため lockfile が無くても動く。GitHub に push すると起動する。`renv.lock` を採用したら renv 系 action に切り替えてもよい（ファイル冒頭コメント参照）。
+`.github/workflows/R-check.yaml` はコード走査（`renv::dependencies()`）で依存を解決するため lockfile が無くても動く。GitHub に push すると起動する。`renv.lock` を採用したら renv 系 action に切り替えてもよい（ファイル冒頭コメント参照）。
 
 ## 7. 動作確認
 

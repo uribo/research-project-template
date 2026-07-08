@@ -24,7 +24,6 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 ├── README.md          # 概要・前提ツール・実行コマンド
 ├── TODO.md            # マイルストーン・Go/No-go ゲート・ブロッカー
 ├── _targets.R         # targets パイプライン定義
-├── DESCRIPTION        # 依存パッケージ宣言（非 package・依存マニフェスト）
 ├── renv.lock          # renv::init/snapshot で生成（各環境で固定）
 ├── R/                 # 関数定義（tar_source() で自動読み込み、副作用なし）
 ├── data-raw/          # 不変の生データ（gitignore 対象）
@@ -125,9 +124,9 @@ process_data <- function(raw_data, year) {
 ### R パッケージ管理（renv）
 
 - `renv` によるパッケージ管理を使用。`renv.lock` でバージョンを固定（**各環境で `renv::init()` / `renv::snapshot()` により生成**。テンプレートには同梱しない）
-- 依存は `DESCRIPTION` の `Imports` / `Suggests` に宣言し、`renv::init()` が拾えるようにする
-- 新しいパッケージを追加した場合は `DESCRIPTION` を更新し `renv::snapshot()` でロックファイルを更新する
-- パッケージのインストールは `renv::install()` を使用（`install.packages()` ではなく）
+- 依存マニフェスト（`DESCRIPTION` 等）は持たない。依存は `renv::dependencies()` の**コード走査**（`library()` 呼び出し・`pkg::fun()` 名前空間呼び出し）で暗黙的に検出される。名前空間プレフィックス規約（上記スタイル）がそのまま依存宣言を兼ねる
+- **注意**: コード中に登場しないパッケージは検出されない。対話的にしか使わないツール（例: `gittargets`）やコメントアウト中の雛形（`crew`/`mirai`）は、実際にコードで使い始めた時点で lockfile に入る
+- 新しいパッケージは `renv::install()` で導入し（`install.packages()` ではなく）、使用コードを書いたら `renv::snapshot()` でロックファイルを更新する
 - **明示的な必要性がない限り `renv.lock` にパッケージを追加しない**
 
 ### 再現性
@@ -180,7 +179,7 @@ We analyzed `r scales::comma(n_obs)` observations...
 |---|---|
 | `data` | データ取得・前処理（`data-raw/` スクリプト） |
 | `targets` | パイプライン（`_targets.R`） |
-| `renv` | パッケージ管理（`renv.lock`, `DESCRIPTION`） |
+| `renv` | パッケージ管理（`renv.lock`） |
 | `notes` | 分析ノート（`notes/`） |
 | `paper` | 原稿（`paper/`） |
 | `（モジュール名）` | `R/` の機能モジュール（例: `clean`, `model`, `viz`） |
