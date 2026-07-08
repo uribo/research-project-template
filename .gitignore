@@ -31,6 +31,7 @@ notes/*.knit.md
 paper/*.html
 paper/*_files/
 .quarto/
+**/*.quarto_ipynb
 
 # --- data: ignore contents, but keep tracked scaffolding + example ---
 # NOTE: order matters. Re-include the directory itself before its contents.
