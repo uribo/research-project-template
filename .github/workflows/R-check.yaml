@@ -29,13 +29,22 @@ jobs:
         with:
           use-public-rspm: true
 
+      # The project .Rprofile (loaded from the repo root) shadows the one where
+      # setup-r configures repos, so a bare Rscript sees no CRAN mirror. Set
+      # repos explicitly: the public PPM binary repo (RSPM env var exported by
+      # use-public-rspm) with a source-CRAN fallback. The HTTPUserAgent header
+      # makes PPM serve Linux binaries.
       - name: Install dependencies discovered from code
         run: |
-          Rscript -e 'install.packages("renv")'
           Rscript -e '
+            rspm <- Sys.getenv("RSPM")
+            options(repos = if (nzchar(rspm)) c(RSPM = rspm) else c(CRAN = "https://cloud.r-project.org"))
+            options(HTTPUserAgent = sprintf("R/%s R (%s)", getRversion(), paste(getRversion(), R.version["platform"], R.version["arch"], R.version["os"])))
+            if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
             deps <- unique(renv::dependencies(quiet = TRUE)$Package)
             message("Discovered dependencies: ", paste(sort(deps), collapse = ", "))
-            install.packages(setdiff(deps, rownames(installed.packages())))
+            to_install <- setdiff(deps, rownames(installed.packages()))
+            if (length(to_install)) install.packages(to_install)
           '
 
       - name: Validate targets pipeline
