@@ -22,9 +22,12 @@ targets::tar_source("R")
 core_targets <- list(
   tar_target(
     example_raw_file,
-    "data-raw/example/penguins-sample.csv",
+    verify_provenance(
+      "data-raw/example/penguins-sample.csv",
+      "71653a432f48da60de096a74221e5db85bb68a5c3ff6bd9fabd19a1645e924a3"
+    ),
     format = "file",
-    description = "Example の生データ CSV パス（format=\"file\" で宣言）"
+    description = "Example の生データ CSV パス（sha256 provenance 検証つき）"
   ),
   tar_target(
     example_data,
