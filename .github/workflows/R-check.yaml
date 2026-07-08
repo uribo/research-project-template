@@ -8,7 +8,10 @@
 # Quarto target when the Quarto CLI is absent, keeping CI light and portable.
 #
 # Once you adopt a renv.lock, you may switch dependency installation to
-# r-lib/actions/setup-renv@v2.
+# r-lib/actions/setup-renv@v2. Enabling renv's pak backend there
+# (RENV_CONFIG_PAK_ENABLED=TRUE) unifies R-package pinning (renv) and system
+# requirements (pak) into a single renv::restore(), replacing the manual pak
+# step below. Left to the downstream project; the template does not adopt it.
 #
 # This workflow runs only on GitHub (push / pull_request); it is inert locally.
 name: R-check
