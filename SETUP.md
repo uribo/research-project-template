@@ -94,3 +94,9 @@ git rm SETUP.md
 ```
 
 `R/example_functions.R` は自プロジェクトの関数に置き換え、`_targets.R` の example ターゲットを実タスクに差し替える。
+
+残すもの・書き換えるもの:
+
+- `R/data_provenance.R`（`verify_provenance()`）は汎用ヘルパー。**残す**。凍結データを使わないプロジェクトでは削除してよい
+- `data-raw/PROVENANCE.md` は example 行を削除し、自分の生データの manifest を記入する
+- `tests/testthat/test-data-provenance.R` はヘルパーを残すなら残す
