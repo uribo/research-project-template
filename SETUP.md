@@ -73,7 +73,7 @@ git commit -m "chore: initialize project from research-project-template"
 
 ## 6. CI の有効化
 
-`.github/workflows/R-check.yaml` はコード走査（`renv::dependencies()`）で依存を解決するため lockfile が無くても動く。GitHub に push すると起動する。`renv.lock` を採用したら renv 系 action に切り替えてもよい（ファイル冒頭コメント参照）。
+`.github/workflows/R-check.yaml` はコード走査（`renv::dependencies()`）で依存を解決するため lockfile が無くても動く。パッケージのインストールは `pak` が担い、システム要件（例: `igraph`→GLPK、`sf`→GDAL）も自動で apt 導入する。GitHub に push すると起動する。`renv.lock` を採用したら renv 系 action に切り替えてもよい（ファイル冒頭コメント参照）。
 
 ## 7. 動作確認
 

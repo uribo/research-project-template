@@ -1,7 +1,8 @@
 # CI for the analysis project. Dependencies are discovered by scanning the
 # code with renv::dependencies() (library() calls and pkg::fun() usage), so no
-# dependency manifest is needed. Packages install as binaries via the public
-# Posit Package Manager.
+# dependency manifest is needed. pak installs the R packages together with
+# their system requirements (e.g. igraph needs GLPK, sf needs GDAL) — renv pins
+# R packages but not system libraries, so pak fills that gap on the runner.
 #
 # Quarto is intentionally NOT rendered here: the example pipeline omits the
 # Quarto target when the Quarto CLI is absent, keeping CI light and portable.
@@ -29,22 +30,26 @@ jobs:
         with:
           use-public-rspm: true
 
-      # The project .Rprofile (loaded from the repo root) shadows the one where
-      # setup-r configures repos, so a bare Rscript sees no CRAN mirror. Set
-      # repos explicitly: the public PPM binary repo (RSPM env var exported by
-      # use-public-rspm) with a source-CRAN fallback. The HTTPUserAgent header
-      # makes PPM serve Linux binaries.
-      - name: Install dependencies discovered from code
+      # Bootstrap pak from its own repo (an explicit URL, so this does not need
+      # a CRAN mirror — the project .Rprofile at the repo root otherwise shadows
+      # the profile where setup-r sets repos). pak then installs renv (used only
+      # to scan the code) and every discovered package together with its system
+      # requirements, which it resolves and apt-installs automatically on GitHub
+      # Actions runners.
+      - name: Install dependencies (with system requirements) from code
         run: |
           Rscript -e '
-            rspm <- Sys.getenv("RSPM")
-            options(repos = if (nzchar(rspm)) c(RSPM = rspm) else c(CRAN = "https://cloud.r-project.org"))
-            options(HTTPUserAgent = sprintf("R/%s R (%s)", getRversion(), paste(getRversion(), R.version["platform"], R.version["arch"], R.version["os"])))
-            if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
-            deps <- unique(renv::dependencies(quiet = TRUE)$Package)
+            install.packages("pak", repos = sprintf(
+              "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+              .Platform$pkgType, R.version$os, R.version$arch
+            ))
+            pak::pkg_install("renv")
+            deps <- setdiff(
+              unique(renv::dependencies(quiet = TRUE)$Package),
+              rownames(installed.packages())
+            )
             message("Discovered dependencies: ", paste(sort(deps), collapse = ", "))
-            to_install <- setdiff(deps, rownames(installed.packages()))
-            if (length(to_install)) install.packages(to_install)
+            if (length(deps)) pak::pkg_install(deps)
           '
 
       - name: Validate targets pipeline
