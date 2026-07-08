@@ -134,6 +134,22 @@ process_data <- function(raw_data, year) {
 - 重い・再生成が遅い計算は `gittargets` または `targets` の branching で冗長な再計算を避ける
 - 大容量の生データを git にコミットしない。`.gitignore` + `data-raw/`（gitignored）で運用
 - ブートストラップ・順列検定・シミュレーションのシードは必ず設定する。グローバル `set.seed()` より `withr::with_seed()` を優先
+- 実行環境の非決定要因を固定する: TZ・照合順序（`LC_COLLATE`）は `.Rprofile` で明示（下記）。成果物には環境記録を残す（`sessioninfo::session_info()` を `notes/`・`paper/` の QMD 末尾に）
+
+#### 外部データソースの再現性ハイアラーキ
+
+ライブな外部ソース（API、SPARQL、移動 ref、版が動くパッケージ）に依存する取得は、次の優先順で再現性を確保する。**バイトの凍結コピーは最終手段**。
+
+1. **正典に pin して都度再取得**（最優先）: 版付き DOI/Zenodo、タグ付きリリース、CRAN の版＋SHA。re-derivable かつ再現可能
+2. **移動 ref を不変識別子に固定**: `master`/`latest` → commit SHA。上流は正典のまま状態だけ固定
+3. **バイトを凍結**（最終手段）: 上流が再現可能なハンドルを持たないときのみ（時間遡及不可の SPARQL、版の無い API、force-push される ref）
+
+- どの段でも**正典からの再導出スクリプト（provenance）を必ず残す**。ライブ取得は retry＋fail-loud（`purrr::safely()` で握り潰さない）
+- 凍結・pin したら下流を再ビルドし、論文時の値とバイト一致を検証する（`pointblank::row_count_match()` 等でドリフトを fail-loud 化）
+
+#### 凍結データの provenance 検証
+
+`data-raw/` に凍結した不変データは、`data-raw/PROVENANCE.md` の manifest（`file` / `sha256` / source / retrieved / license / 再導出経路）に記録する。パイプラインでは `R/data_provenance.R` の `verify_provenance(path, sha256)` を `format = "file"` ターゲットに挟み、読み込み前に sha256 を fail-loud 検証する（例: `_targets.R` の `example_raw_file`）。共同研究者が別コピーを持っていても、ここで停止する。
 
 ## データソース
 
@@ -141,10 +157,12 @@ process_data <- function(raw_data, year) {
 |---|---|---|---|
 | （要記入） | （取得元） | （URL DL / API / 提供） | （ライセンス・再配布可否） |
 
+各凍結ファイルの sha256・取得日・再導出経路は `data-raw/PROVENANCE.md` に記録する。
+
 ### 外部サービスの認証
 
 - 認証情報（API key、サービスアカウント JSON）は `.Renviron` に置き、**コミットしない**
-- ライセンスデータ（再配布不可）はリポジトリにコミットせず `data-raw/`（gitignored）で扱う
+- ライセンスデータ（再配布不可）はリポジトリにコミットせず `data-raw/`（gitignored）で扱う。バイトは共有せず、**PROVENANCE.md のハッシュ・メタデータのみコミット**する
 
 ## Quarto
 
