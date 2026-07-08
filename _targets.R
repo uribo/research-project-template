@@ -7,8 +7,9 @@ targets::tar_option_set(
     "tibble",
     "pointblank"
   ),
-  format = "rds",
-  error = "continue"
+  format = "rds"
+  # error = "stop" (the default): a failing target halts the pipeline. Do not
+  # switch to "continue"; it hides failures and breaks the fail-loud principle.
   # Parallel execution with crew + mirai (uncomment when needed):
   # controller = crew::crew_controller_local(workers = 4)
 )
