@@ -39,24 +39,27 @@ jobs:
       # to scan the code) and every discovered package together with its system
       # requirements, which it resolves and apt-installs automatically on GitHub
       # Actions runners.
+      # The R code runs from a quoted heredoc (Rscript -) so shell never parses
+      # it: apostrophes in comments and $ in R stay literal. Do not switch back
+      # to Rscript -e '...' — an apostrophe there closes the shell string.
       - name: Install dependencies (with system requirements) from code
         run: |
-          Rscript -e '
-            install.packages("pak", repos = sprintf(
-              "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-              .Platform$pkgType, R.version$os, R.version$arch
-            ))
-            pak::pkg_install("renv")
-            # errors = "fatal": a file the scanner cannot parse must fail CI —
-            # this scan is the only dependency declaration, and quiet = TRUE
-            # would silently drop the broken file's dependencies.
-            deps <- setdiff(
-              unique(renv::dependencies(errors = "fatal", progress = FALSE)$Package),
-              rownames(installed.packages())
-            )
-            message("Discovered dependencies: ", paste(sort(deps), collapse = ", "))
-            if (length(deps)) pak::pkg_install(deps)
-          '
+          Rscript - <<'RSCRIPT'
+          install.packages("pak", repos = sprintf(
+            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+            .Platform$pkgType, R.version$os, R.version$arch
+          ))
+          pak::pkg_install("renv")
+          # errors = "fatal": a file the scanner cannot parse must fail CI —
+          # this scan is the only dependency declaration, and quiet = TRUE
+          # would silently drop the broken file's dependencies.
+          deps <- setdiff(
+            unique(renv::dependencies(errors = "fatal", progress = FALSE)$Package),
+            rownames(installed.packages())
+          )
+          message("Discovered dependencies: ", paste(sort(deps), collapse = ", "))
+          if (length(deps)) pak::pkg_install(deps)
+          RSCRIPT
 
       - name: Validate targets pipeline
         run: Rscript -e 'targets::tar_validate()'
