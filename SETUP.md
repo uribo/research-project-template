@@ -92,6 +92,8 @@ git config core.hooksPath .githooks
 
 `renv.lock` を採用したら `r-lib/actions/setup-renv@v2` に切り替えてもよい（ファイル冒頭コメント参照）。その際 renv の pak バックエンド（`RENV_CONFIG_PAK_ENABLED=TRUE`）を有効化すると、R パッケージの pin（renv）とシステム要件（pak）が単一の `renv::restore()` に統合され、現行の手動 pak ステップを置き換えられる。**テンプレート自体はこれを採用せず、利用側の判断に委ねる**。
 
+`.github/workflows/renv-update.yaml` は日次（JST 早朝）に起動するが、`gate` ジョブがリポジトリ名のハッシュから割り当てた **週 1 回の曜日にのみ**更新を実行する（手動 `workflow_dispatch` は常に実行）。これにより、このテンプレートから作成した複数プロジェクトの renv-update PR が同じ曜日に一斉発火せず、レビュー負荷が週内に分散する。下流プロジェクトがまだ `renv.lock` を採用していない場合は何もせず終了し、更新差分がある場合だけ `automation/renv-update` ブランチを作成・更新して PR を開く。`renv` 自身の更新で `renv/activate.R` が変わる場合も同じ PR に含める。`renv::snapshot()` は下流プロジェクトの `snapshot.type` に従うため、PR ではパッケージ削除も含めて確認する。`_targets.R` や `tests/testthat.R` が無いプロジェクトでは該当 validation を skip する。PR 作成には GitHub Actions の `GITHUB_TOKEN` を使うため、リポジトリ設定で workflow permissions の read/write と "Allow GitHub Actions to create and approve pull requests" を有効化する。なお `GITHUB_TOKEN` が作成・更新した PR は、通常の push や PAT 由来の PR と異なり別 workflow を追加起動しない点に注意する。
+
 ## 7. 動作確認
 
 ```bash
@@ -105,7 +107,8 @@ Rscript tests/testthat.R
 テンプレート同梱の動作確認用 example を削除・置換する:
 
 ```bash
-git rm -r data-raw/example notes/example-note.qmd tests/testthat/test-example.R
+git rm -r data-raw/example notes/example-note.qmd tests/testthat/test-example.R \
+  tests/testthat/test-reproducibility.R
 # R/example_functions.R は自分の関数に置き換える
 git rm SETUP.md
 ```
@@ -117,3 +120,4 @@ git rm SETUP.md
 - `R/data_provenance.R`（`verify_provenance()`）は汎用ヘルパー。**残す**。凍結データを使わないプロジェクトでは削除してよい
 - `data-raw/PROVENANCE.md` は example 行を削除し、自分の生データの manifest を記入する
 - `tests/testthat/test-data-provenance.R` はヘルパーを残すなら残す
+- `tests/testthat/test-reproducibility.R` は example 専用なので削除し、**自プロジェクト版の数値 sentinel に置き換える**。パイプラインの主要導出値（サンプルサイズ・係数・要約統計）を許容誤差でピン留めし、commit 済みの小さな fixture（本番データが gitignored / 再配布不可なら合成データ）に対して検証する。この sentinel は `tests/testthat.R` 経由で renv-update workflow の tests ステップでも走り、パッケージ更新による数値 drift を fail-loud で捕捉する（`tar_validate()` は DAG 構造しか見ず、targets はパッケージ版を cue に含めないため、この層が再現性検証の実体になる）

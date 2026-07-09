@@ -136,6 +136,8 @@ process_data <- function(raw_data, year) {
 - 大容量の生データを git にコミットしない。`.gitignore` + `data-raw/`（gitignored）で運用
 - ブートストラップ・順列検定・シミュレーションのシードは必ず設定する。グローバル `set.seed()` より `withr::with_seed()` を優先
 - 実行環境の非決定要因を固定する: TZ・照合順序（`LC_COLLATE`）は `.Rprofile` で明示（下記）。成果物には環境記録を残す（`sessioninfo::session_info()` を `notes/`・`paper/` の QMD 末尾に）
+- **数値 reproducibility sentinel を置く**: `targets::tar_validate()` は DAG 構造しか検査せず、targets はパッケージ版を cue に含めないため、`renv` 更新は既存ターゲットを無効化せず数値 drift を素通りさせる。主要導出値（サンプルサイズ・係数・要約統計）を許容誤差でピン留めした testthat テストを `tests/testthat/` に置き、commit 済みの小さな fixture（本番データが gitignored / 再配布不可なら合成データ）に対して検証する。`tests/testthat.R` 経由で `renv-update` workflow の tests ステップでも走り、パッケージ更新による drift を fail-loud で PR に赤表示する（雛形: `tests/testthat/test-reproducibility.R`）。**限界を明示**: これは代表 fixture による drift 検出であり、`sentinel が通る = 論文結果が完全再現` ではない。CI は本番データを持たないため、完全な数値再現はローカルで本番データに対し `tar_make()` を再走して論文時の値と突き合わせて検証する
+- `renv-update` workflow は開発フェーズの依存衛生ツール。**原稿投稿後・査読中・出版アーカイブ後は凍結**する（グローバル方針の as-submitted freeze）。凍結は「PR を無視」ではなく **workflow を無効化**する方が堅い（`gh workflow disable renv-update`、または schedule をコメントアウト）。誤 merge リスクとノイズを減らせる。開発再開時は `workflow_dispatch` で手動起動すれば足りる
 
 #### 外部データソースの再現性ハイアラーキ
 
