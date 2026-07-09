@@ -57,3 +57,24 @@ app-server child; runtime respawned and a smoke task passed.
   `RENV_PATHS_CACHE` is machine/user scope — not set in the template.
 
 作業終了: 2026-07-09 11:28
+
+## Follow-up: renv.lock review gate via Claude Code hook
+
+User asked whether the "review renv.lock diffs before commit" discipline
+(needed because auto.snapshot = TRUE) can be enforced via
+`.claude/settings.json` hooks. Implemented a PreToolUse hook on Bash:
+when a `git commit` includes renv.lock (staged, or worktree-modified with
+-a/--all), it emits `permissionDecision: "ask"` with a package-level diff
+vs HEAD (added / removed / version-bumped, via jq on the lockfile JSON), so
+the user reviews and approves before the commit executes. Non-renv.lock
+commits pass silently.
+
+Verified: 5 pipe-test cases in scratch git repos (staged, non-commit,
+unstaged+plain commit, `-a` worktree case — which required reading worktree
+content instead of the index — and the lockfile-less template repo);
+`jq -e` schema check; live-fire proof via temporary sentinel (then removed).
+Limitation noted: the gate applies only to commits made through Claude Code,
+not to `git commit` typed in a terminal (that would need a git pre-commit
+hook).
+
+作業終了: 2026-07-09 11:47
