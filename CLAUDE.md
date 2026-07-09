@@ -128,6 +128,7 @@ process_data <- function(raw_data, year) {
 - **注意**: コード中に登場しないパッケージは検出されない。対話的にしか使わないツール（例: `gittargets`）やコメントアウト中の雛形（`crew`/`mirai`）は、実際にコードで使い始めた時点で lockfile に入る
 - 新しいパッケージは `renv::install()` で導入し（`install.packages()` ではなく）、使用コードを書いたら `renv::snapshot()` でロックファイルを更新する
 - **明示的な必要性がない限り `renv.lock` にパッケージを追加しない**
+- `renv.lock` を含むコミットはレビューゲートを通る: Claude 経由は `.claude/settings.json` の hook、ターミナルからは `.githooks/pre-commit`（有効化手順は SETUP.md 手順 5.1）。`renv.config.auto.snapshot = TRUE` による暗黙の lockfile 更新を見逃さないための仕組み
 
 ### 再現性
 

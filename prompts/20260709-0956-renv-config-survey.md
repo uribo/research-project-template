@@ -78,3 +78,26 @@ not to `git commit` typed in a terminal (that would need a git pre-commit
 hook).
 
 作業終了: 2026-07-09 11:47
+
+## Follow-up 2: git-native pre-commit gate (.githooks)
+
+User asked for a git-hook counterpart plus a setup memo, delegated to Codex.
+Codex hit its usage limit (recovers 13:41 JST); per AskUserQuestion the user
+chose to have Claude implement instead.
+
+- `.githooks/pre-commit` (POSIX sh, tracked, executable): no-op unless
+  renv.lock is staged; prints the same package-level diff format as the
+  Claude-side hook (jq; falls back to `git diff --cached --stat` without jq);
+  TTY → y/N confirm (abort message mentions `git commit --no-verify`);
+  no TTY → summary + proceed (never hangs CI/GUI); initial-commit safe.
+- Activation is per-clone: `git config core.hooksPath .githooks`
+  (documented in SETUP.md 5.1; git hooks are not distributed by clone).
+- Docs: SETUP.md new §5.1 (activation, escape hatch, no-TTY behavior,
+  two-layer design vs the Claude-side hook), CLAUDE.md renv section pointer.
+- Verified: sh -n; no renv.lock → silent; staged → summary; TTY simulated via
+  python pty (n → exit 1, y → exit 0); /dev/tty-unopenable noise fixed by
+  subshell open test; empty-line artifact in initial-commit diff fixed;
+  end-to-end `git commit` with core.hooksPath in a scratch repo ran the hook
+  and committed.
+
+作業終了: 2026-07-09 12:05

@@ -1,0 +1,67 @@
+#!/bin/sh
+# pre-commit: review gate for renv.lock changes.
+#
+# With renv.config.auto.snapshot = TRUE (.Rprofile), renv.lock can change
+# without an explicit renv::snapshot(), so a lockfile change may ride along
+# unnoticed. This hook surfaces a package-level summary of the staged
+# renv.lock change and asks for confirmation before the commit proceeds.
+#
+# Companion of the Claude Code-side gate (.claude/settings.json PreToolUse):
+# that one covers commits made through Claude Code; this one covers commits
+# made from a terminal. Activate per clone with:
+#   git config core.hooksPath .githooks
+#
+# Escape hatch: git commit --no-verify
+#
+# Non-interactive contexts (no TTY: CI, some GUI clients) get the summary on
+# stderr and the commit proceeds — review is assumed to have happened there.
+
+# No-op unless renv.lock is part of this commit.
+git diff --cached --name-only -- renv.lock | grep -q . || exit 0
+
+echo "pre-commit: this commit includes renv.lock" >&2
+
+if command -v jq >/dev/null 2>&1; then
+  # Package-level summary vs HEAD: "- name version" removed/old,
+  # "+ name version" added/new. On the initial commit (no HEAD) everything
+  # shows as added.
+  old=$(git show HEAD:renv.lock 2>/dev/null |
+    jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' 2>/dev/null | sort)
+  new=$(git show :renv.lock 2>/dev/null |
+    jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' 2>/dev/null | sort)
+  old_file=$(mktemp) && new_file=$(mktemp) || exit 1
+  printf '%s\n' "$old" | sed '/^$/d' >"$old_file"
+  printf '%s\n' "$new" | sed '/^$/d' >"$new_file"
+  changes=$(diff "$old_file" "$new_file" | grep '^[<>]' |
+    sed 's/^< /- /; s/^> /+ /' | head -50)
+  rm -f "$old_file" "$new_file"
+  [ -n "$changes" ] || changes='(no package-level changes; repos/metadata diff only)'
+  {
+    echo "Package changes vs HEAD (-: removed/old, +: added/new):"
+    printf '%s\n' "$changes"
+  } >&2
+else
+  echo "jq not found; falling back to raw diff stat:" >&2
+  git diff --cached --stat -- renv.lock >&2
+fi
+
+echo "Note: renv.config.auto.snapshot = TRUE may have updated renv.lock without an explicit renv::snapshot()." >&2
+
+# Interactive confirmation when a TTY is available; otherwise proceed with a
+# note (CI and GUI clients must not hang or hard-fail here). The subshell
+# open test is the reliable check: /dev/tty can exist as a node yet be
+# unopenable without a controlling terminal.
+if (exec </dev/tty) 2>/dev/null; then
+  printf 'Proceed with this renv.lock change? [y/N] ' >&2
+  read -r answer </dev/tty
+  case "$answer" in
+    y | Y) exit 0 ;;
+    *)
+      echo "Aborted. Unstage renv.lock, or bypass once with: git commit --no-verify" >&2
+      exit 1
+      ;;
+  esac
+fi
+
+echo "(no TTY: proceeding; review of the summary above is assumed)" >&2
+exit 0

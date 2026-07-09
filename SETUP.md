@@ -71,6 +71,21 @@ git commit -m "chore: initialize project from research-project-template"
 # 必要なら jj colocated 化: jj git init --colocate
 ```
 
+### 5.1 git hooks の有効化（renv.lock レビューゲート）
+
+git hooks はクローンで配布されないため、**クローン（メンバー）ごとに一度**有効化する:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+有効化すると、`renv.lock` を含むコミットの直前に `.githooks/pre-commit` がパッケージ単位の差分（追加・削除・版変更）を表示し、`y/N` の確認を求める。`.Rprofile` の `renv.config.auto.snapshot = TRUE` により lockfile は明示的な `renv::snapshot()` なしに変化しうるため、意図しない依存変更のコミット混入をここで検知する。
+
+- 中断した場合は renv.lock を unstage するか、意図的な変更なら再コミットで `y` を選ぶ
+- 一度だけ迂回する明示的な逃げ道: `git commit --no-verify`
+- TTY が無い環境（CI・一部 GUI クライアント）では差分表示のみで通過する（ハングさせない）
+- **二層構成**: Claude Code 経由のコミットは `.claude/settings.json` の PreToolUse hook が承認ダイアログで同じ差分レビューを課す。この git hook はターミナルからの人間のコミットを対象とする補完層
+
 ## 6. CI の有効化
 
 `.github/workflows/R-check.yaml` はコード走査（`renv::dependencies()`）で依存を解決するため lockfile が無くても動く。パッケージのインストールは `pak` が担い、システム要件（例: `igraph`→GLPK、`sf`→GDAL）も自動で apt 導入する。GitHub に push すると起動する。
