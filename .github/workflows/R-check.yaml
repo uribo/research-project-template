@@ -47,8 +47,11 @@ jobs:
               .Platform$pkgType, R.version$os, R.version$arch
             ))
             pak::pkg_install("renv")
+            # errors = "fatal": a file the scanner cannot parse must fail CI —
+            # this scan is the only dependency declaration, and quiet = TRUE
+            # would silently drop the broken file's dependencies.
             deps <- setdiff(
-              unique(renv::dependencies(quiet = TRUE)$Package),
+              unique(renv::dependencies(errors = "fatal", progress = FALSE)$Package),
               rownames(installed.packages())
             )
             message("Discovered dependencies: ", paste(sort(deps), collapse = ", "))
