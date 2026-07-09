@@ -11,6 +11,7 @@
 .claude/settings.local.json
 .claude/agent-memory/
 .claude/scheduled_tasks.lock
+CLAUDE.local.md
 
 # --- renv (library managed by renv after init; lock + settings are tracked) ---
 renv/library/
@@ -45,6 +46,13 @@ data-raw/**
 data/**
 !data/
 !data/.gitkeep
+
+# --- prompt logs: local process artifacts, not versioned by default ---
+# Keep the directory scaffolding + README, but do not track the per-session
+# logs. This also stops "Use this template" from copying the template's own
+# development logs into new projects. To version your logs, remove these lines.
+prompts/*.md
+!prompts/README.md
 
 # --- spatial data (uncomment if the project handles GIS files) ---
 # *.shp
