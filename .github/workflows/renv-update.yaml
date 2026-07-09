@@ -1,0 +1,193 @@
+# Weekly renv lockfile update.
+#
+# This workflow is inert until the downstream project adopts renv.lock. When a
+# lockfile exists, it restores the pinned environment, runs renv::update(), and
+# opens or refreshes a PR only if renv.lock changed.
+name: renv-update
+
+on:
+  # Fires daily at 19:17 UTC (04:17 JST); the gate job below runs the update on
+  # only one JST weekday per repository (derived from the repo name) so that
+  # projects created from this template do not all open PRs on the same day.
+  schedule:
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: renv-update-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Spread scheduled runs across the week: each repository is assigned one JST
+  # weekday from a hash of its name, so multiple projects created from this
+  # template do not fire simultaneously. Weekday is evaluated in JST to match the
+  # human review cadence (the 19:17 UTC trigger is 04:17 JST the next day).
+  # Manual dispatch always proceeds.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.decide.outputs.proceed }}
+    steps:
+      - name: Decide whether today is this repo's slot
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "Manual dispatch; proceeding."
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          hash=$(printf '%s' "$GITHUB_REPOSITORY" | cksum | cut -d' ' -f1)
+          target_dow=$((hash % 7))
+          today_dow=$(TZ=Asia/Tokyo date +%w)
+          if [ "$today_dow" -eq "$target_dow" ]; then
+            echo "Today (JST dow=$today_dow) is this repo's slot; proceeding."
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Today (JST dow=$today_dow) != slot ($target_dow); skipping."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  update:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for renv.lock
+        id: lockfile
+        run: |
+          if [ -f renv.lock ]; then
+            echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No renv.lock found; skipping package update."
+            echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.lockfile.outputs.has_lockfile == 'true'
+        with:
+          use-public-rspm: true
+
+      - name: Install renv tooling
+        if: steps.lockfile.outputs.has_lockfile == 'true'
+        run: |
+          Rscript - <<'RSCRIPT'
+          install.packages("pak", repos = sprintf(
+            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+            .Platform$pkgType, R.version$os, R.version$arch
+          ))
+          pak::pkg_install("renv")
+          RSCRIPT
+
+      - name: Update renv.lock
+        id: update
+        if: steps.lockfile.outputs.has_lockfile == 'true'
+        run: |
+          Rscript - <<'RSCRIPT'
+          options(
+            repos = c(CRAN = Sys.getenv(
+              "RSPM",
+              "https://packagemanager.posit.co/cran/latest"
+            ))
+          )
+          renv::restore(prompt = FALSE)
+          renv::update(prompt = FALSE, lock = TRUE)
+          # Make the lockfile write explicit. With pak enabled, update(lock =
+          # TRUE) can update the project library without leaving a lockfile
+          # diff; snapshot also reflects the downstream project's configured
+          # snapshot.type, so PR reviewers should check removals as well as
+          # version bumps.
+          renv::snapshot(prompt = FALSE)
+          RSCRIPT
+
+          if git diff --quiet -- renv.lock renv/activate.R; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate targets pipeline
+        if: steps.update.outputs.has_changes == 'true' && hashFiles('_targets.R') != ''
+        run: Rscript -e 'targets::tar_validate()'
+
+      - name: Run tests
+        if: steps.update.outputs.has_changes == 'true' && hashFiles('tests/testthat.R') != ''
+        run: Rscript tests/testthat.R
+
+      - name: Summarize package changes
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          old=$(git show HEAD:renv.lock 2>/dev/null | jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' | sort)
+          new=$(jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' renv.lock | sort)
+          {
+            echo "Automated renv package update."
+            echo
+            echo "Package-level changes:"
+            diff <(printf '%s\n' "$old") <(printf '%s\n' "$new") \
+              | grep '^[<>]' \
+              | sed 's/^< /- /; s/^> /+ /' \
+              || echo "(metadata-only lockfile change)"
+            echo
+            echo "Note: renv::snapshot() uses this project's snapshot.type."
+            echo "Review package removals as well as version updates."
+            echo
+            echo "Validation run:"
+            if [ -f _targets.R ]; then
+              echo "- targets::tar_validate()"
+            else
+              echo "- targets::tar_validate() skipped: _targets.R not found"
+            fi
+            if [ -f tests/testthat.R ]; then
+              echo "- Rscript tests/testthat.R"
+            else
+              echo "- Rscript tests/testthat.R skipped: tests/testthat.R not found"
+            fi
+            echo
+            echo "Changed files:"
+            git diff --name-only -- renv.lock renv/activate.R
+          } > renv-update-pr-body.md
+
+      - name: Open or update pull request
+        if: steps.update.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          UPDATE_BRANCH: automation/renv-update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "$UPDATE_BRANCH":"refs/remotes/origin/$UPDATE_BRANCH" || true
+          git checkout -B "$UPDATE_BRANCH"
+          git add renv.lock
+          if [ -f renv/activate.R ]; then
+            git add renv/activate.R
+          fi
+          git commit -m "chore(renv): update R package lockfile"
+
+          if git show-ref --verify --quiet "refs/remotes/origin/$UPDATE_BRANCH"; then
+            lease=$(git rev-parse "refs/remotes/origin/$UPDATE_BRANCH")
+            git push --force-with-lease="refs/heads/$UPDATE_BRANCH:$lease" origin "$UPDATE_BRANCH"
+          else
+            git push origin "$UPDATE_BRANCH"
+          fi
+
+          pr_number=$(gh pr list --head "$UPDATE_BRANCH" --state open --json number --jq '.[0].number // ""')
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" \
+              --title "chore(renv): update R package lockfile" \
+              --body-file renv-update-pr-body.md
+          else
+            gh pr create \
+              --base "$BASE_BRANCH" \
+              --head "$UPDATE_BRANCH" \
+              --title "chore(renv): update R package lockfile" \
+              --body-file renv-update-pr-body.md
+          fi
