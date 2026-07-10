@@ -1,0 +1,40 @@
+meta:
+  name:
+    short: 0x96f Theme
+    full: 0x96f Theme
+    link: https://0x96f.dev/
+
+color:
+  palette:
+    black: "#333333"
+    white: "#ffffff"
+    neon-blue: "#49cae4"
+    yellow: "#ffca58"
+    red: "#ff7272"
+    green: "#bcdf59"
+    magenta: "#a093e2"
+    dark-green: "#005e5e"
+    dark-blue: "#aee8f4"
+    dark-grey: "#959595"
+    light-grey: "#e7e5e2"
+
+    # Bootstrap color aliases
+    blue: neon-blue
+    purple: magenta
+    cyan: neon-blue
+    gray: dark-grey
+
+  background:
+    light: white
+    dark: black
+  foreground:
+    light: black
+    dark: white
+  primary: magenta
+  secondary: dark-grey
+  success: green
+  info: neon-blue
+  warning: yellow
+  danger: red
+  light: white
+  dark: gray

@@ -1,6 +1,7 @@
 ---
 title: "Example analysis note — {{PROJECT_NAME}}"
-format: html
+# Render defaults (format.html, knitr device) live in notes/_metadata.yml
+# so every note inherits them. Override here only when this note needs to differ.
 ---
 
 ```{r setup}
