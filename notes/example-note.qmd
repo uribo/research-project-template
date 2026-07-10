@@ -1,6 +1,7 @@
 ---
 title: "Example analysis note — {{PROJECT_NAME}}"
-format: html
+# Render defaults (format.html, knitr device) live in notes/_metadata.yml
+# so every note inherits them. Override here only when this note needs to differ.
 ---
 
 ```{r setup}
@@ -18,12 +19,37 @@ never hard-coded in the prose.
 We analyzed `r scales::comma(n_obs)` observations across `r n_species`
 species.
 
+::: {.callout-important}
+## Never hard-code numbers in prose
+Every reported value — counts, estimates, summary statistics — must come from the
+`targets` pipeline via `tar_load()` and be interpolated inline, as above. A
+hard-coded `3,847` silently goes stale the moment the data changes.
+:::
+
 ```{r table}
 #| echo: false
 example_summary
 ```
 
 Replace this note with your own analysis (see `SETUP.md`, step 8).
+
+## Cross-note links
+
+Link to sibling notes with their **`.qmd`** path — for example
+[another analysis note](another-note.qmd), or a section anchor such as
+[the model section](another-note.qmd#model). Keeping the `.qmd` extension in the
+source is convenient for editing, GitHub browsing, and `tar_quarto()` dependency
+resolution. The `notes/qmd-links-to-html.lua` filter (registered in
+`notes/_metadata.yml`) rewrites these to `.html` at HTML render time, so the
+rendered page points at the rendered note instead of its raw source. External
+URLs (e.g. <https://quarto.org>) and non-`.qmd` links are left untouched.
+
+::: {.callout-tip}
+## Link against the source, not the render
+Write cross-note links with the `.qmd` extension. The filter turns them into
+`.html` only at render time, so editing, GitHub browsing, and `tar_quarto()`
+dependency resolution all keep working.
+:::
 
 ## Session information
 

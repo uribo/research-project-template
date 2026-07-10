@@ -1,0 +1,25 @@
+# ディレクトリ共通の Quarto メタデータ
+# - notes/ 配下の .qmd 全てに自動 merge される（個別 YAML で override 可）
+# - 全ノート共通のレンダー既定をここに集約する。個別ノートは title だけ書けばよい
+# - filters: ノート間の .qmd リンクを HTML レンダー時のみ .html に書き換える
+#   （ソースは .qmd のまま、レンダー後は .html を指す）。詳細は qmd-links-to-html.lua
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    # 自己完結 HTML（画像・CSS を単一ファイルに埋め込み、共有しやすい）
+    embed-resources: true
+    # OS/ブラウザの配色設定に追従（light/dark）。_brand.yml のテーマが前提
+    respect-user-color-scheme: true
+
+knitr:
+  opts_chunk:
+    # 高品質なラスタ描画（アンチエイリアス・システムフォント対応）。
+    # 図を描くノートで有効。利用時は renv::install("ragg") + snapshot() が必要
+    dev: ragg_png
+    # 表示用の解像度。print 品質が要るノートは個別に 300 へ引き上げる
+    dpi: 192
+
+filters:
+  - qmd-links-to-html.lua

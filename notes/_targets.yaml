@@ -1,0 +1,8 @@
+# targets store 解決用の設定（notes/ 単体レンダー向け）
+# - Quarto は notes/*.qmd をレンダーする際、R チャンクの作業ディレクトリを
+#   notes/ に設定する。既定では tar_load()/tar_read() が notes/_targets/ を
+#   探して失敗するため、store をプロジェクトルートの ../_targets/ に向ける。
+# - これによりノートの setup チャンクでは tar_load(example_summary) を
+#   store 引数なしでそのまま書ける。
+main:
+  store: ../_targets/
