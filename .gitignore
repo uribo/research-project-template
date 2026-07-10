@@ -61,3 +61,5 @@ prompts/*.md
 # *.prj
 # *.cpg
 # *.zip
+
+/.luarc.json
