@@ -1,0 +1,7 @@
+# ディレクトリ共通の Quarto メタデータ
+# - notes/ 配下の .qmd 全てに自動 merge される（個別 YAML で override 可）
+# - filters: ノート間の .qmd リンクを HTML レンダー時のみ .html に書き換える
+#   （ソースは .qmd のまま、レンダー後は .html を指す）。詳細は qmd-links-to-html.lua
+
+filters:
+  - qmd-links-to-html.lua

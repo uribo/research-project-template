@@ -173,6 +173,7 @@ process_data <- function(raw_data, year) {
 - 原稿ドラフト: `paper/`（`.qmd`）
 - 数値の引用は `tar_read()` / `tar_load()` 経由で動的に解決する（下記 Data Reference Policy）
 - Quarto のレンダーは Quarto CLI を前提とする。`notes/` の QMD は `tarchetypes::tar_quarto()` でパイプラインに組み込めるが、CLI 未導入環境では当該ターゲットが落ちる点に留意
+- ノート間リンクは **ソースでは `.qmd`** で書く（編集・GitHub 閲覧・tar_quarto 依存解決に好都合）。`notes/qmd-links-to-html.lua`（`notes/_metadata.yml` の `filters:` に登録済み）が HTML レンダー時のみ相対 `.qmd` リンクを `.html` に書き換えるため、レンダー済み HTML をブラウザで開いた際に生テキストではなくレンダー済みページへ遷移する（#anchor 保持・外部 URL/非 qmd は不変）
 
 ### Data Reference Policy
 

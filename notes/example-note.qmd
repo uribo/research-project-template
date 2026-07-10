@@ -25,6 +25,17 @@ example_summary
 
 Replace this note with your own analysis (see `SETUP.md`, step 8).
 
+## Cross-note links
+
+Link to sibling notes with their **`.qmd`** path — for example
+[another analysis note](another-note.qmd), or a section anchor such as
+[the model section](another-note.qmd#model). Keeping the `.qmd` extension in the
+source is convenient for editing, GitHub browsing, and `tar_quarto()` dependency
+resolution. The `notes/qmd-links-to-html.lua` filter (registered in
+`notes/_metadata.yml`) rewrites these to `.html` at HTML render time, so the
+rendered page points at the rendered note instead of its raw source. External
+URLs (e.g. <https://quarto.org>) and non-`.qmd` links are left untouched.
+
 ## Session information
 
 Recording the environment in the rendered output makes the note
