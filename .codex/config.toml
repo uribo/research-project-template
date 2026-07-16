@@ -1,0 +1,19 @@
+# Project-local Codex defaults. Applied only when this repository is trusted.
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+# Keep credentials out of model-initiated child processes. R_ENVIRON_USER also
+# prevents R from automatically loading the gitignored project .Renviron file.
+[shell_environment_policy]
+inherit = "core"
+ignore_default_excludes = false
+exclude = [
+  "*_API_KEY",
+  "*_TOKEN",
+  "*_SECRET",
+  "*_PASSWORD",
+  "AWS_*",
+  "AZURE_*",
+  "GOOGLE_APPLICATION_CREDENTIALS",
+]
+set = { R_ENVIRON_USER = "/dev/null" }
