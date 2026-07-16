@@ -12,7 +12,7 @@ updated: {{DATE}}
 ## 技術スタック
 
 - R / tidyverse、`targets`（パイプライン）、`renv`（依存管理）、Quarto（ノート・原稿）
-- Claude Code 統合（air/renv hooks、memory、prompts）
+- Claude Code / Codex 統合（air/renv hooks、sandbox・環境変数ポリシー、memory、prompts）
 
 ## 構成
 

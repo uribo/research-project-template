@@ -40,6 +40,8 @@ git -C research-project-template archive HEAD | tar -x -C {{PROJECT_SLUG}}/
 
 `Renviron.example` は先頭ドットなしで同梱している。手順 5 の前に `cp Renviron.example .Renviron` でコピーし、実値を記入する（`.Renviron` は gitignore 済み）。
 
+Claude Code と Codex の通常セッションでは `.Renviron` を自動ロードしない。Claude Code は `.claude/settings.json`、Codex は `.codex/config.toml` で `R_ENVIRON_USER=/dev/null` を設定し、Codex はさらに秘密らしい名前の環境変数を子プロセスへ継承しない。認証が必要な取得処理は、必要な変数を確認したうえでセッション単位・コマンド単位に明示的に有効化する。
+
 置換後、残存がないか確認する（`SETUP.md` 自身はプレースホルダの説明を含むため除外。手順 8 で削除する）:
 
 ```bash

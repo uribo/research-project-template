@@ -2,9 +2,10 @@
 
 {{PROJECT_DESCRIPTION}}
 
-R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェクト。Claude Code との協働を前提とした構成。
+R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェクト。Claude Code / Codex との協働を前提とした構成。
 
 - プロジェクト知識・規約: [CLAUDE.md](CLAUDE.md)
+- Codex 固有の規約: [AGENTS.md](AGENTS.md)
 - マイルストーン・Go/No-go ゲート: [TODO.md](TODO.md)
 
 > このリポジトリは [research-project-template](https://github.com/uribo/research-project-template) テンプレートから生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。

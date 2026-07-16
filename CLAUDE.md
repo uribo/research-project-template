@@ -21,6 +21,8 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 ```
 {{PROJECT_SLUG}}/
 ├── CLAUDE.md          # プロジェクト知識・規約（本ファイル）
+├── AGENTS.md          # Codex 固有の補足規約
+├── .codex/config.toml # Codex の sandbox・環境変数ポリシー
 ├── README.md          # 概要・前提ツール・実行コマンド
 ├── TODO.md            # マイルストーン・Go/No-go ゲート・ブロッカー
 ├── _targets.R         # targets パイプライン定義
@@ -165,6 +167,8 @@ process_data <- function(raw_data, year) {
 ### 外部サービスの認証
 
 - 認証情報（API key、サービスアカウント JSON）は `.Renviron` に置き、**コミットしない**
+- Claude Code / Codex の通常セッションでは `R_ENVIRON_USER=/dev/null` とし、`.Renviron` を R に自動ロードさせない。Codex は `.codex/config.toml` で秘密らしい名前の環境変数も子プロセスへの継承対象から外す
+- 認証が必要な処理では、対象の credential と利用範囲を説明してユーザー承認を得た後、セッション単位・コマンド単位で明示的に有効化する。値をチャット、ログ、コマンド出力へ表示しない
 - ライセンスデータ（再配布不可）はリポジトリにコミットせず `data-raw/`（gitignored）で扱う。バイトは共有せず、**PROVENANCE.md のハッシュ・メタデータのみコミット**する
 
 ## Quarto
