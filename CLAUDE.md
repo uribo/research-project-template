@@ -23,7 +23,7 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 ├── CLAUDE.md          # プロジェクト知識・規約（本ファイル）
 ├── AGENTS.md          # Codex 固有の補足規約
 ├── .codex/config.toml # Codex の sandbox・環境変数ポリシー
-├── .vscode/           # VS Code/Positron ワークスペース設定（air/Quarto の formatOnSave・推奨拡張）
+├── .vscode/           # VS Code/Positron ワークスペース設定（意図的に git 追跡。下記注記）
 ├── README.md          # 概要・前提ツール・実行コマンド
 ├── TODO.md            # マイルストーン・Go/No-go ゲート・ブロッカー
 ├── _targets.R         # targets パイプライン定義
@@ -39,6 +39,8 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 ├── prompts/           # Claude Code 作業プロンプトログ
 └── tests/             # testthat
 ```
+
+> **`.vscode/` の追跡方針**: 作者のグローバル gitignore（`~/.config/git/ignore`）は `.vscode` を無視するが、本テンプレートでは例外として意図的に git 追跡する（`.gitignore` の `!.vscode/` で再包含）。テンプレートの目的が規約の伝播であり、内容がワークフロー設定（air/Quarto の formatOnSave・推奨拡張）に限られるため。テーマ・フォント等の個人的好みは置かない。
 
 ## 作業時の注意
 
