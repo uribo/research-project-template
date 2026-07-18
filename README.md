@@ -14,7 +14,7 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 
 | ツール | 用途 | 確認コマンド |
 |---|---|---|
-| R (≥ 4.5) | 解析本体 | `Rscript --version` |
+| R (4.6.1 基準) | 解析本体。CI（R-check）と同じ基準版。renv.lock 生成後はその記録版が正 | `Rscript --version` |
 | [renv](https://rstudio.github.io/renv/) | パッケージ管理 | `Rscript -e 'packageVersion("renv")'` |
 | [air](https://posit-dev.github.io/air/) | R フォーマッタ | `air --version` |
 | [Quarto CLI](https://quarto.org/) | ノート・原稿レンダー | `quarto --version` |
