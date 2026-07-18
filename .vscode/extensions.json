@@ -1,6 +1,5 @@
 {
     "recommendations": [
-        "REditorSupport.r",
         "Posit.air-vscode",
         "quarto.quarto"
     ]

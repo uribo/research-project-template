@@ -19,7 +19,7 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 | [air](https://posit-dev.github.io/air/) | R フォーマッタ | `air --version` |
 | [Quarto CLI](https://quarto.org/) | ノート・原稿レンダー | `quarto --version` |
 
-VS Code / Positron では、ワークスペースを開くと [.vscode/extensions.json](.vscode/extensions.json) の推奨拡張（R・air・Quarto）の導入が提示され、[.vscode/settings.json](.vscode/settings.json) により保存時フォーマット（R: air、.qmd: Quarto）が有効になる。
+VS Code / Positron では、ワークスペースを開くと [.vscode/extensions.json](.vscode/extensions.json) の推奨拡張（air・Quarto）の導入が提示され、[.vscode/settings.json](.vscode/settings.json) により保存時フォーマット（R: air、.qmd: Quarto）が有効になる。
 
 ## セットアップ
 
