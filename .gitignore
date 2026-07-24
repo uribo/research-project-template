@@ -15,6 +15,7 @@
 # to workflow settings (formatter policy, extension recommendations) — no
 # personal preferences such as themes or fonts.
 !.vscode/
+.vscode/settings.local.json
 
 # --- Claude Code local state ---
 .claude/settings.local.json
