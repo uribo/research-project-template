@@ -122,7 +122,7 @@ process_data <- function(raw_data, year) {
 - `R/` のファイル構成・関数名はスケルトンであり、実装時に分割・統合・リネームしてよい。`_targets.R` のターゲット定義と整合が取れていれば問題ない
 - 全ターゲットに `description` 引数で日本語の処理概要を付与する
 - 並列実行: `crew` + `mirai`（`tar_option_set(controller = crew::crew_controller_local(...))`）。`_targets.R` にコメントで雛形を用意
-- 重い再計算には `gittargets` を利用してデータバージョニングする
+- 重い再計算・再取得不能な外部データには `gittargets` を利用してストアをスナップショットする（運用は「再現性」の gittargets 節）
 - **全データフレームターゲットに `validate_*()` 関数を設ける**。検証項目はデータの意味的整合性（キーの一意性、値域、NA 許容範囲）に集中。モデルオブジェクト・図表出力は対象外
 - データバリデーション（`pointblank`）は独立ターゲットにせず、処理関数内で `stop_on_fail()` によるアサーションとして組み込む
 
@@ -130,7 +130,7 @@ process_data <- function(raw_data, year) {
 
 - `renv` によるパッケージ管理を使用。`renv.lock` でバージョンを固定（**各環境で `renv::init()` / `renv::snapshot()` により生成**。テンプレートには同梱しない）
 - 依存マニフェスト（`DESCRIPTION` 等）は持たない。依存は `renv::dependencies()` の**コード走査**（`library()` 呼び出し・`pkg::fun()` 名前空間呼び出し）で暗黙的に検出される。名前空間プレフィックス規約（上記スタイル）がそのまま依存宣言を兼ねる
-- **注意**: コード中に登場しないパッケージは検出されない。対話的にしか使わないツール（例: `gittargets`）やコメントアウト中の雛形（`crew`/`mirai`）は、実際にコードで使い始めた時点で lockfile に入る
+- **注意**: コード中に登場しないパッケージは検出されない。コメントアウト中の雛形（`crew`/`mirai`）は実際にコードで使い始めた時点で lockfile に入る。対話的にしか使わないツール（例: `gittargets`）は暗黙探索に載らないので、導入したら `renv::record(c("gittargets", "gert", "credentials", "zip"))` で依存ごと明示記録する
 - 新しいパッケージは `renv::install()` で導入し（`install.packages()` ではなく）、使用コードを書いたら `renv::snapshot()` でロックファイルを更新する
 - **明示的な必要性がない限り `renv.lock` にパッケージを追加しない**
 - `renv.lock` を含むコミットはレビューゲートを通る: Claude 経由は `.claude/settings.json` の hook、ターミナルからは `.githooks/pre-commit`（有効化手順は SETUP.md 手順 5.1）。`renv.config.auto.snapshot = TRUE` による暗黙の lockfile 更新を見逃さないための仕組み
@@ -159,6 +159,18 @@ process_data <- function(raw_data, year) {
 #### 凍結データの provenance 検証
 
 `data-raw/` に凍結した不変データは、`data-raw/PROVENANCE.md` の manifest（`file` / `sha256` / source / retrieved / license / 再導出経路）に記録する。パイプラインでは `R/data_provenance.R` の `verify_provenance(path, sha256)` を `format = "file"` ターゲットに挟み、読み込み前に sha256 を fail-loud 検証する（例: `_targets.R` の `example_raw_file`）。共同研究者が別コピーを持っていても、ここで停止する。
+
+#### gittargets によるストアのスナップショット
+
+`_targets/` は gitignored なので、意図しない再計算で上書きされたオブジェクトは復元できない。gittargets はストアを独立 git リポジトリ（`_targets/.git`）として管理し、コード側のコミット SHA に紐付く `code=<SHA>` ブランチにバイトを保存する。**時間遡及不可の外部ソース（版指定取得に対応しない API 等）を扱うプロジェクトでは導入する**。実例: 2026-07 に IUCN Red List API が 2025-2 → 2026-1 に更新され、版チェックの abort を外して `tar_make()` した結果、葉ターゲットの一部が新版で置換されて復元不能になった。
+
+- **これは再現性の担保ではなくローカルの復旧点**。上のハイアラーキ第 3 段（バイト凍結＋`PROVENANCE.md`）が恒久対処であり、スナップショットはその凍結・修復作業自体を巻き戻すための保険。両者を一つの仕組みに背負わせない
+- **スナップショットは破壊的操作の「前」に取る**: 外部 API 由来サブツリーの再構築、`tar_destroy()`、ターゲット定義の大きな変更、版チェック等のガードを外す作業。事故の後では手遅れ
+- **fail-loud な abort が実質的なデータ保護として機能している場合がある**。外す前に `tar_outdated()` で「外したら何が走るか」を確認し、スナップショットを取ってから外す
+- 初期化は `tar_git_init(git_lfs = FALSE)`。LFS フィルタが効かない環境では checkout が pointer file を返し、**復旧経路でこそ静かに壊れる**。ローカル専用リポジトリなら plain git で足りる
+- `tar_git_snapshot(status = FALSE)` を既定にする。既定の `status = interactive()` は `tar_outdated()` を走らせてパイプライン定義を評価するため、保全操作に副作用が乗る。ラッパ関数を `R/` に置いて既定を固定するとよい
+- **クラウド同期フォルダ（iCloud / Google Drive 等）に生きた git リポジトリを置かない**。pack/ref 更新中の部分同期でリポジトリが壊れ、復旧しようとした時に初めて気づく。オフサイト化するなら明示 push する bare ミラーか restic/borg の暗号化バックアップ（再配布制限のあるデータでも暗号化で保管懸念が解消する）
+- 汚染・ドリフトしたオブジェクトの特定は **mtime と内容の二つの独立した手がかり**で行う（`find _targets/objects -newermt <日付>` ＋ データ側の版マーカー列）。内容側で判定できればストアをコピーして mtime を失っても再特定できる
 
 ## データソース
 
