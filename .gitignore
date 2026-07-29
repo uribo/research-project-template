@@ -14,8 +14,14 @@
 # .vscode/ are not silently invisible to git status. Keep the contents limited
 # to workflow settings (formatter policy, extension recommendations) — no
 # personal preferences such as themes or fonts.
+#
+# There is NO workspace-level "machine-local" settings file: VS Code and
+# Positron read .vscode/settings.json and nothing else. A .vscode/
+# settings.local.json is silently ignored — no error, no warning. Machine-
+# specific values (R interpreter paths, fonts) belong in User settings, not
+# here. This path is deliberately NOT git-ignored so that creating one by
+# mistake shows up in git status instead of failing quietly.
 !.vscode/
-.vscode/settings.local.json
 
 # --- Claude Code local state ---
 .claude/settings.local.json
