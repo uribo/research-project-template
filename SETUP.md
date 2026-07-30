@@ -120,6 +120,7 @@ git rm SETUP.md
 残すもの・書き換えるもの:
 
 - `R/data_provenance.R`（`verify_provenance()`）は汎用ヘルパー。**残す**。凍結データを使わないプロジェクトでは削除してよい
+- `R/input_guards.R` と `tests/testthat/test-input-guards.R` は汎用ヘルパーとその既知答えテスト。**残す**（example 依存なし）。入力の不在が空の結果に化けるのを止める層で、詳細は CLAUDE.md「『取れなかった』を『無かった』にしない」。外部取得をしないプロジェクトでは `new_fetch_result()` / `summarise_fetch_results()` だけ削除してもよいが、`require_input_dir()` / `list_input_files()` はディレクトリ読み込みがある限り有用
 - `_dependencies.R` は **残す**。YAML からしか参照されないパッケージの唯一の宣言経路（現在は `notes/_metadata.yml` の `dev: ragg_png` に対する `ragg`）。`notes/` の図描画をやめて `dev` キーを外す場合のみ該当行を削除する。**このファイルを source しない・`R/` に移動しない**
 - `data-raw/PROVENANCE.md` は example 行を削除し、自分の生データの manifest を記入する
 - `tests/testthat/test-data-provenance.R` はヘルパーを残すなら残す
