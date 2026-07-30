@@ -120,6 +120,7 @@ git rm SETUP.md
 残すもの・書き換えるもの:
 
 - `R/data_provenance.R`（`verify_provenance()`）は汎用ヘルパー。**残す**。凍結データを使わないプロジェクトでは削除してよい
+- `_dependencies.R` は **残す**。YAML からしか参照されないパッケージの唯一の宣言経路（現在は `notes/_metadata.yml` の `dev: ragg_png` に対する `ragg`）。`notes/` の図描画をやめて `dev` キーを外す場合のみ該当行を削除する。**このファイルを source しない・`R/` に移動しない**
 - `data-raw/PROVENANCE.md` は example 行を削除し、自分の生データの manifest を記入する
 - `tests/testthat/test-data-provenance.R` はヘルパーを残すなら残す
 - `tests/testthat/test-reproducibility.R` は example 専用なので削除し、**自プロジェクト版の数値 sentinel に置き換える**。パイプラインの主要導出値（サンプルサイズ・係数・要約統計）を許容誤差でピン留めし、commit 済みの小さな fixture（本番データが gitignored / 再配布不可なら合成データ）に対して検証する。この sentinel は `tests/testthat.R` 経由で renv-update workflow の tests ステップでも走り、パッケージ更新による数値 drift を fail-loud で捕捉する（`tar_validate()` は DAG 構造しか見ず、targets はパッケージ版を cue に含めないため、この層が再現性検証の実体になる）

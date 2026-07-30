@@ -16,7 +16,11 @@ format:
 knitr:
   opts_chunk:
     # 高品質なラスタ描画（アンチエイリアス・システムフォント対応）。
-    # 図を描くノートで有効。利用時は renv::install("ragg") + snapshot() が必要
+    # 図を描くノートで有効。利用時は renv::install("ragg") が必要。
+    # ただし install + snapshot だけでは足りない: この YAML キーは
+    # renv::dependencies() のコード走査に載らないため、宣言を
+    # ルートの _dependencies.R に置く（既に library(ragg) を記載済み）。
+    # これを外すと auto.snapshot で lockfile から静かに落ちる。
     dev: ragg_png
     # 表示用の解像度。print 品質が要るノートは個別に 300 へ引き上げる
     dpi: 192

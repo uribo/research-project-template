@@ -131,6 +131,7 @@ process_data <- function(raw_data, year) {
 - `renv` によるパッケージ管理を使用。`renv.lock` でバージョンを固定（**各環境で `renv::init()` / `renv::snapshot()` により生成**。テンプレートには同梱しない）
 - 依存マニフェスト（`DESCRIPTION` 等）は持たない。依存は `renv::dependencies()` の**コード走査**（`library()` 呼び出し・`pkg::fun()` 名前空間呼び出し）で暗黙的に検出される。名前空間プレフィックス規約（上記スタイル）がそのまま依存宣言を兼ねる
 - **注意**: コード中に登場しないパッケージは検出されない。コメントアウト中の雛形（`crew`/`mirai`）は実際にコードで使い始めた時点で lockfile に入る。対話的にしか使わないツール（例: `gittargets`）は暗黙探索に載らないので、導入したら `renv::record(c("gittargets", "gert", "credentials", "zip"))` で依存ごと明示記録する
+- **YAML からしか参照されないパッケージは `_dependencies.R` に宣言する**。コード走査が読むのは R/Rmd/qmd の**コード**であって YAML メタデータではないため、`notes/_metadata.yml` の `dev: ragg_png` のように YAML キーにしか名前が出ないパッケージは検出されない。`auto.snapshot = TRUE` のため次の snapshot で lockfile から静かに落ち、別マシンや CI で無関係に見えるレンダーエラーとして初めて現れる。**`renv::record()` では直らない** — lockfile には戻るが `renv::status()` は「使われていない」と報告し続け、次の snapshot で再び消える。宣言は走査対象のファイルに置く必要がある。`_dependencies.R` は **source されない**ので `tar_source()` が読む `R/` には置かない。追加後は `renv::dependencies()` の Source 列に当該ファイルが出ること・`renv::status()` が問題なしを報告することを確認する
 - 新しいパッケージは `renv::install()` で導入し（`install.packages()` ではなく）、使用コードを書いたら `renv::snapshot()` でロックファイルを更新する
 - **明示的な必要性がない限り `renv.lock` にパッケージを追加しない**
 - `renv.lock` を含むコミットはレビューゲートを通る: Claude 経由は `.claude/settings.json` の hook、ターミナルからは `.githooks/pre-commit`（有効化手順は SETUP.md 手順 5.1）。`renv.config.auto.snapshot = TRUE` による暗黙の lockfile 更新を見逃さないための仕組み
