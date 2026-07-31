@@ -50,6 +50,7 @@ rg '\{\{[A-Z_]+\}\}' --glob '!SETUP.md' || echo "no placeholders remaining"
 
 ## 3. プロジェクト固有の記入
 
+- `README.md`: 冒頭のコメントアウトされた静的バッジ雛形（助成・期間・Obsidian）から必要なものを有効化し、残りは削除する。Obsidian バッジは著者マシン固有の vault を指すため、共同研究者と共有するリポジトリでは有効化しない
 - `CLAUDE.md`: データソース表・コミット scope 表を記入。不要なら Appendix（Author-local workflow）を削除
 - `TODO.md`: Go/No-go ゲートの `Threshold` ほか固定欄、Phase 表を記入
 

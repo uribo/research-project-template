@@ -1,5 +1,16 @@
 # {{PROJECT_NAME}}
 
+[![R-check](https://github.com/{{GITHUB_REPO}}/actions/workflows/R-check.yaml/badge.svg)](https://github.com/{{GITHUB_REPO}}/actions/workflows/R-check.yaml)
+[![renv-update](https://github.com/{{GITHUB_REPO}}/actions/workflows/renv-update.yaml/badge.svg)](https://github.com/{{GITHUB_REPO}}/actions/workflows/renv-update.yaml)
+
+<!-- Optional static badges. Uncomment and fill in what applies; delete the rest.
+     The Obsidian link is author-local (it resolves only on a machine with that
+     vault) — keep it out of repositories shared with collaborators.
+[![Grant: GRANT_NAME](https://img.shields.io/badge/Grant-GRANT__NAME-blue)]()
+[![Period: START–END](https://img.shields.io/badge/Period-YYYY.MM--YYYY.MM-green)]()
+[![Obsidian Notes](https://img.shields.io/badge/Obsidian-PROJECT__SLUG-green)](obsidian://open?vault=VAULT&file=research%2FPROJECT_SLUG)
+-->
+
 {{PROJECT_DESCRIPTION}}
 
 R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェクト。Claude Code / Codex との協働を前提とした構成。
