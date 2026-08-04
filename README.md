@@ -59,6 +59,33 @@ quarto render notes/
 quarto render paper/
 ```
 
+## CI
+
+| ワークフロー | 起動 | 内容 |
+|---|---|---|
+| [R-check](.github/workflows/R-check.yaml) | push / pull request | `targets::tar_validate()` と `tests/testthat.R` |
+| [renv-update](.github/workflows/renv-update.yaml) | 日次起動（リポジトリ名のハッシュで割り当てた週 1 回の曜日にのみ実行）・`workflow_dispatch` | `renv::update()` の結果を `automation/renv-update` ブランチの PR で提案する |
+
+### 初回に必要なリポジトリ設定
+
+`renv-update` は `GITHUB_TOKEN` で PR を作成するため、**リポジトリ設定で Actions の PR 作成を許可する**。Settings → Actions → General → Workflow permissions の **Allow GitHub Actions to create and approve pull requests** を有効化するか、CLI で:
+
+```bash
+gh api -X PUT /repos/{{GITHUB_REPO}}/actions/permissions/workflow \
+  -f default_workflow_permissions=read \
+  -F can_approve_pull_request_reviews=true
+```
+
+`default_workflow_permissions` は `read` のままでよい。ワークフローが `permissions: contents: write` を宣言しており、ワークフロー単位で既定より広い権限を要求できるため。
+
+未設定のままだと、`renv::restore()` / `renv::update()` は成功したうえで**最後の `gh pr create` だけが落ちる**。ワークフロー冒頭の `permissions: pull-requests: write` はこのリポジトリ設定を上書きできない:
+
+```
+pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull requests (createPullRequest)
+```
+
+このとき push 自体は済んでいるため、**PR の無い `automation/renv-update` ブランチが残る**。設定を有効化したうえで `gh workflow run renv-update.yaml` を手動実行すれば PR が作られる。
+
 ## ディレクトリ
 
 構成と各ディレクトリの役割は [CLAUDE.md](CLAUDE.md)「ディレクトリ構成」を参照。

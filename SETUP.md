@@ -95,7 +95,9 @@ git config core.hooksPath .githooks
 
 `renv.lock` を採用したら `r-lib/actions/setup-renv@v2` に切り替えてもよい（ファイル冒頭コメント参照）。その際 renv の pak バックエンド（`RENV_CONFIG_PAK_ENABLED=TRUE`）を有効化すると、R パッケージの pin（renv）とシステム要件（pak）が単一の `renv::restore()` に統合され、現行の手動 pak ステップを置き換えられる。**テンプレート自体はこれを採用せず、利用側の判断に委ねる**。
 
-`.github/workflows/renv-update.yaml` は日次（JST 早朝）に起動するが、`gate` ジョブがリポジトリ名のハッシュから割り当てた **週 1 回の曜日にのみ**更新を実行する（手動 `workflow_dispatch` は常に実行）。これにより、このテンプレートから作成した複数プロジェクトの renv-update PR が同じ曜日に一斉発火せず、レビュー負荷が週内に分散する。下流プロジェクトがまだ `renv.lock` を採用していない場合は何もせず終了し、更新差分がある場合だけ `automation/renv-update` ブランチを作成・更新して PR を開く。`renv` 自身の更新で `renv/activate.R` が変わる場合も同じ PR に含める。`renv::snapshot()` は下流プロジェクトの `snapshot.type` に従うため、PR ではパッケージ削除も含めて確認する。`_targets.R` や `tests/testthat.R` が無いプロジェクトでは該当 validation を skip する。PR 作成には GitHub Actions の `GITHUB_TOKEN` を使うため、リポジトリ設定で workflow permissions の read/write と "Allow GitHub Actions to create and approve pull requests" を有効化する。なお `GITHUB_TOKEN` が作成・更新した PR は、通常の push や PAT 由来の PR と異なり別 workflow を追加起動しない点に注意する。
+`.github/workflows/renv-update.yaml` は日次（JST 早朝）に起動するが、`gate` ジョブがリポジトリ名のハッシュから割り当てた **週 1 回の曜日にのみ**更新を実行する（手動 `workflow_dispatch` は常に実行）。これにより、このテンプレートから作成した複数プロジェクトの renv-update PR が同じ曜日に一斉発火せず、レビュー負荷が週内に分散する。下流プロジェクトがまだ `renv.lock` を採用していない場合は何もせず終了し、更新差分がある場合だけ `automation/renv-update` ブランチを作成・更新して PR を開く。`renv` 自身の更新で `renv/activate.R` が変わる場合も同じ PR に含める。`renv::snapshot()` は下流プロジェクトの `snapshot.type` に従うため、PR ではパッケージ削除も含めて確認する。`_targets.R` や `tests/testthat.R` が無いプロジェクトでは該当 validation を skip する。なお `GITHUB_TOKEN` が作成・更新した PR は、通常の push や PAT 由来の PR と異なり別 workflow を追加起動しない点に注意する。
+
+**`renv-update` を機能させるには、リポジトリ設定で Actions の PR 作成を許可する必要がある**（手順は [README.md](README.md)「CI > 初回に必要なリポジトリ設定」。SETUP.md は手順 8 で削除するため、恒久的な記述は README 側に置いている）。この設定を忘れると、`renv.lock` を採用してから最初の割当曜日まで失敗が表面化しない。**生成直後にここで済ませる**。
 
 ## 7. 動作確認
 
