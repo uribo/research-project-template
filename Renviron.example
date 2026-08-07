@@ -1,6 +1,27 @@
 # Copy this file to .Renviron (gitignored) and fill in real values.
 # NEVER commit credentials, API keys, or service-account paths.
+#
+# The file is shipped without a leading dot on purpose: it stays visible in a
+# listing and cannot be mistaken for the real .Renviron.
 
+# --- reproducibility -------------------------------------------------------
+# Pin string collation. LC_COLLATE drives sort()/order()/factor() level order.
+# It differs from the system locale even for pure ASCII -- C sorts by code
+# point ("Zebra" < "apple"), most system locales sort case-insensitively
+# ("apple" < "Zebra") -- so an unpinned collation makes results depend on the
+# machine.
+#
+# Setting it HERE rather than only in .Rprofile is what makes the pin hold.
+# renv resets the locale on its way out of certain file parses
+# (renv_parse_impl_native() calls a bare `Sys.setlocale()`, which resets LC_ALL
+# to the environment default rather than restoring the saved value). When the
+# environment says C, that reset lands on C and the pin survives; when it does
+# not, the pin is silently undone. See .Rprofile for the fallback layer.
+#
+# Keep this line even if you add no secrets: it is the primary pin.
+LC_COLLATE=C
+
+# --- project ---------------------------------------------------------------
 # Contact email used in the HTTP User-Agent for polite API access.
 CONTACT_EMAIL={{CONTACT_EMAIL}}
 

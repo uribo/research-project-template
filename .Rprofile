@@ -26,16 +26,36 @@ if (file.exists("renv/activate.R")) {
   source("renv/activate.R")
 }
 
-# Pin string collation LAST. LC_COLLATE drives sort/order/factor level order
-# and is a silent source of cross-machine differences -- most visibly for
-# non-ASCII data, where the system locale and C order disagree.
+# Collation pin, layer 3 of 3. LC_COLLATE drives sort()/order()/factor() level
+# order and is a silent source of cross-machine differences -- even for pure
+# ASCII, where C sorts by code point ("Zebra" < "apple") and most system
+# locales sort case-insensitively ("apple" < "Zebra").
 #
-# This MUST come after renv activates. `renv/activate.R` resets LC_COLLATE to
-# the system locale, so setting it earlier is undone with no error and no
-# warning: the profile runs, `Sys.setlocale()` returns "C", and the session
-# still ends up on the system locale. Found 2026-08-06 on macOS with renv 1.2.4
-# under LANG=ja_JP.UTF-8, where it had silently defeated the pin in a
-# downstream project since the template was adopted.
+# The three layers, and why one is not enough:
 #
-# Check with: Rscript -e 'Sys.getlocale("LC_COLLATE")'  -> must print "C"
+#   1. Renviron.example -> .Renviron   LC_COLLATE=C in the environment.
+#      The primary pin: renv's reset (see below) reads the environment, so it
+#      lands back on C. Requires the user to have copied .Renviron.
+#   2. .claude/settings.json, .codex/config.toml
+#      Agent sessions set R_ENVIRON_USER=/dev/null to keep credentials out of
+#      model-initiated processes. R treats ./.Renviron as the *user* Renviron,
+#      so that also suppresses layer 1 -- hence LC_COLLATE is set there too.
+#   3. this line
+#      Fallback for a checkout with no .Renviron and no agent config.
+#
+# This line MUST come after renv activates. `renv/activate.R` can reset
+# LC_COLLATE to the system locale, so setting it earlier is undone with no
+# error and no warning: the profile runs, `Sys.setlocale()` returns "C", and
+# the session still ends up on the system locale. The mechanism is upstream --
+# renv:::renv_parse_impl_native() defers a bare `Sys.setlocale()`, which resets
+# LC_ALL to the environment default instead of restoring the saved value, so it
+# fires whenever renv falls back to native-encoding parsing. That also makes
+# this layer the weakest of the three: a later renv call can undo it again,
+# which is why layers 1 and 2 (which change what the reset resets *to*) carry
+# the real guarantee.
+#
+# Found 2026-08-06 on macOS with renv 1.2.3/1.2.4 under LANG=ja_JP.UTF-8, where
+# it had silently defeated the pin in four downstream projects.
+#
+# Verify: Rscript -e 'Sys.getlocale("LC_COLLATE")'  -> must print "C"
 invisible(Sys.setlocale("LC_COLLATE", "C"))

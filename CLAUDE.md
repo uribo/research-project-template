@@ -143,10 +143,32 @@ process_data <- function(raw_data, year) {
 - 重い・再生成が遅い計算は `gittargets` または `targets` の branching で冗長な再計算を避ける
 - 大容量の生データを git にコミットしない。`.gitignore` + `data-raw/`（gitignored）で運用
 - ブートストラップ・順列検定・シミュレーションのシードは必ず設定する。グローバル `set.seed()` より `withr::with_seed()` を優先
-- 実行環境の非決定要因を固定する: TZ・照合順序（`LC_COLLATE`）は `.Rprofile` で明示（下記）。成果物には環境記録を残す（`sessioninfo::session_info()` を `notes/`・`paper/` の QMD 末尾に）
+- 実行環境の非決定要因を固定する: TZ は `.Rprofile`、照合順序（`LC_COLLATE`）は後述の 3 層で固定する。成果物には環境記録を残す（`sessioninfo::session_info()` を `notes/`・`paper/` の QMD 末尾に）
 - **R バージョンの固定**: 正典は `renv.lock` の `R.Version`。CI は `R-check.yaml` でテンプレート基準の R を明示 pin しており、renv.lock 採用後は `r-version: "renv"` に切り替えて lockfile 記録版と一致させる（`renv-update.yaml` は当初から `"renv"`）。エディタ設定（`.vscode/`）でのインタープリタ絶対パス指定はマシン固有になるため行わない
 - **数値 reproducibility sentinel を置く**: `targets::tar_validate()` は DAG 構造しか検査せず、targets はパッケージ版を cue に含めないため、`renv` 更新は既存ターゲットを無効化せず数値 drift を素通りさせる。主要導出値（サンプルサイズ・係数・要約統計）を許容誤差でピン留めした testthat テストを `tests/testthat/` に置き、commit 済みの小さな fixture（本番データが gitignored / 再配布不可なら合成データ）に対して検証する。`tests/testthat.R` 経由で `renv-update` workflow の tests ステップでも走り、パッケージ更新による drift を fail-loud で PR に赤表示する（雛形: `tests/testthat/test-reproducibility.R`）。**限界を明示**: これは代表 fixture による drift 検出であり、`sentinel が通る = 論文結果が完全再現` ではない。CI は本番データを持たないため、完全な数値再現はローカルで本番データに対し `tar_make()` を再走して論文時の値と突き合わせて検証する
 - `renv-update` workflow は開発フェーズの依存衛生ツール。**原稿投稿後・査読中・出版アーカイブ後は凍結**する（グローバル方針の as-submitted freeze）。凍結は「PR を無視」ではなく **workflow を無効化**する方が堅い（`gh workflow disable renv-update`、または schedule をコメントアウト）。誤 merge リスクとノイズを減らせる。開発再開時は `workflow_dispatch` で手動起動すれば足りる
+
+#### 照合順序（`LC_COLLATE`）の固定
+
+`LC_COLLATE` は `sort()` / `order()` / `factor()` の水準順を決める。**非 ASCII だけの問題ではない**: C は符号点順（`"Zebra" < "apple"`）、多くのシステムロケールは大小文字非依存（`"apple" < "Zebra"`）なので、ASCII のみのデータでも順序が変わる。`dplyr::arrange()` は 1.1 以降ロケール非依存なので tidyverse 中心のコードの露出は限定的だが、`factor()` を `levels =` 無しで作ると水準順が作図の凡例・モデルの contrast・`split()` の分割順へ伝播する。
+
+**`.Rprofile` だけでは守れない。** renv は特定のファイルパースから抜けるときにロケールをリセットする（`renv:::renv_parse_impl_native()` が `defer(Sys.setlocale())` を引数なしで呼んでおり、保存値への復元ではなく `LC_ALL` を環境既定へリセットしている。同ファイルの `renv_scope_locale()` は正しく保存・復元しているので upstream の書き損じ）。したがって**リセット先そのものを `C` にする**必要がある。
+
+| 層 | 場所 | 効く範囲 |
+|---|---|---|
+| 1 | `Renviron.example` → `.Renviron` の `LC_COLLATE=C` | **主たる固定**。環境変数なので renv のリセット後も `C` に戻る |
+| 2 | `.claude/settings.json` の `env`、`.codex/config.toml` の `set` | エージェントセッション。`R_ENVIRON_USER=/dev/null` が `./.Renviron` ごと無効化する（R は `./.Renviron` を *user* Renviron として扱う）ため、層 1 が届かない |
+| 3 | `.Rprofile` 末尾の `Sys.setlocale()` | `.Renviron` もエージェント設定も無いチェックアウト。**起動時しか守れない**（セッション途中の renv 呼び出しで再び飛ぶ） |
+
+層 3 は `renv/activate.R` を `source()` した**後**に置く。前に置くと activate に上書きされ、エラーも警告も出ないまま無効になる。
+
+**確認方法**（新規クローン時、および renv 更新後に一度）:
+
+```bash
+Rscript -e 'Sys.getlocale("LC_COLLATE")'   # "C" と出ること
+```
+
+`C` 以外が出たら、そのプロジェクトの既存成果物はシステムロケール由来の順序を持つ。値が同じでも行順・水準順が変わり得るので、修正後に再ビルドして差分を確認する。
 
 #### 外部データソースの再現性ハイアラーキ
 
