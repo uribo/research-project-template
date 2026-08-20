@@ -29,6 +29,10 @@ jobs:
   # Manual dispatch always proceeds.
   gate:
     runs-on: ubuntu-latest
+    # Hash evaluation only; normally finishes in well under a minute. See the
+    # note on the update job below for why the 6-hour default is not left in
+    # place.
+    timeout-minutes: 10
     outputs:
       proceed: ${{ steps.decide.outputs.proceed }}
     steps:
@@ -55,6 +59,12 @@ jobs:
     needs: gate
     if: needs.gate.outputs.proceed == 'true'
     runs-on: ubuntu-latest
+    # The default job timeout is 6 hours. r-lib/actions/setup-r@v2 stalled on
+    # 2026-08-19 and held runners until that cap, which alone consumed 360
+    # runner-minutes per affected repository. A normal update run takes a few
+    # minutes, so bound it: a hung run should fail fast and be re-runnable
+    # rather than read as "still running".
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:

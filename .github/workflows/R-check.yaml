@@ -26,6 +26,13 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # The default job timeout is 6 hours. r-lib/actions/setup-r@v2 stalled on
+    # 2026-08-19 and held runners until that cap across several projects, so
+    # bound the job: a hung run should fail fast and be re-runnable rather than
+    # read as "still running". 60 minutes leaves room for a cold package cache
+    # (a healthy run took 48 minutes once) while cutting the cost of a hang
+    # from 360 runner-minutes to 60.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
