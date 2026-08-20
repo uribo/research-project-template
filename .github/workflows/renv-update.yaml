@@ -89,11 +89,19 @@ jobs:
           r-version: "renv"
           use-public-rspm: true
 
+      # utils::install.packages(), not install.packages(): this job only runs
+      # when renv.lock exists, so the project .Rprofile has activated renv,
+      # which masks install.packages() with a shim attached as "renv:shims" on
+      # the search path. A bare call would be routed through renv, which
+      # ignores the explicit pak repo below and asks pak to install pak itself,
+      # failing on a source build. The namespace-qualified call bypasses the
+      # shim and still installs into renv's project library. Full note in
+      # R-check.yaml.
       - name: Install renv tooling
         if: steps.lockfile.outputs.has_lockfile == 'true'
         run: |
           Rscript - <<'RSCRIPT'
-          install.packages("pak", repos = sprintf(
+          utils::install.packages("pak", repos = sprintf(
             "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
             .Platform$pkgType, R.version$os, R.version$arch
           ))

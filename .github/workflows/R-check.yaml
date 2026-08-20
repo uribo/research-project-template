@@ -50,13 +50,29 @@ jobs:
       # to scan the code) and every discovered package together with its system
       # requirements, which it resolves and apt-installs automatically on GitHub
       # Actions runners.
+      #
+      # utils::install.packages(), not install.packages(). Once the downstream
+      # project has renv/activate.R, the .Rprofile activates renv, which
+      # attaches an environment named "renv:shims" on the search path masking
+      # install.packages() with renv::install(). A bare call is therefore
+      # routed through renv, which ignores the explicit repos below and (with
+      # renv.config.pak.enabled = TRUE) hands the request to pak — pak then
+      # tries to build pak itself from source and fails downloading from
+      # ghcr.io. The namespace-qualified call bypasses the shim, because the
+      # shims live only on the search path and the utils namespace is left
+      # untouched, while renv's library paths still apply — so pak lands in the
+      # project library that the later steps read. Skipping the profile for
+      # this step instead (--no-init-file, or RENV_CONFIG_AUTOLOADER_ENABLED
+      # FALSE) would also dodge the shim, but would install into a user library
+      # that renv drops from .libPaths() in the steps that follow.
+      #
       # The R code runs from a quoted heredoc (Rscript -) so shell never parses
       # it: apostrophes in comments and $ in R stay literal. Do not switch back
       # to Rscript -e '...' — an apostrophe there closes the shell string.
       - name: Install dependencies (with system requirements) from code
         run: |
           Rscript - <<'RSCRIPT'
-          install.packages("pak", repos = sprintf(
+          utils::install.packages("pak", repos = sprintf(
             "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
             .Platform$pkgType, R.version$os, R.version$arch
           ))
