@@ -1,17 +1,28 @@
-# CI for the analysis project. Dependencies are discovered by scanning the
-# code with renv::dependencies() (library() calls and pkg::fun() usage), so no
-# dependency manifest is needed. pak installs the R packages together with
-# their system requirements (e.g. igraph needs GLPK, sf needs GDAL) — renv pins
-# R packages but not system libraries, so pak fills that gap on the runner.
+# CI for the analysis project. What it installs depends on whether the project
+# has a renv.lock yet, and it decides that here rather than leaving it as a
+# manual edit:
 #
-# Quarto is intentionally NOT rendered here: the example pipeline omits the
-# Quarto target when the Quarto CLI is absent, keeping CI light and portable.
+#   with renv.lock:    renv::restore() through setup-renv, on the R version the
+#                      lockfile records. CI then runs the versions the project
+#                      actually pins.
+#   without renv.lock: dependencies are discovered by scanning the code with
+#                      renv::dependencies() (library() calls and pkg::fun()
+#                      usage) and installed with pak, on the template baseline R.
 #
-# Once you adopt a renv.lock, you may switch dependency installation to
-# r-lib/actions/setup-renv@v2. Enabling renv's pak backend there
-# (RENV_CONFIG_PAK_ENABLED=TRUE) unifies R-package pinning (renv) and system
-# requirements (pak) into a single renv::restore(), replacing the manual pak
-# step below. Left to the downstream project; the template does not adopt it.
+# Either way pak resolves system requirements (igraph needs GLPK, sf needs
+# GDAL): renv pins R packages but not system libraries.
+#
+# The switch used to be a manual step, documented as optional. It was missed:
+# on 2026-08-20, three of five generated projects shipped a renv.lock while CI
+# still installed the latest versions of everything, and three pinned an R
+# version that had no relationship to the lockfile. Nothing failed -- CI was
+# green, testing an environment the project does not use. A step nobody can
+# forget is worth more here than one left to judgement.
+#
+# Quarto IS installed. The pipeline drops its Quarto targets when the CLI is
+# absent, so a CI without Quarto validates a smaller DAG than the project has.
+# _targets.R now names what it dropped, but a reported gap is still a gap: the
+# line scrolls past in a green log, and nothing downstream acts on it.
 #
 # This workflow runs only on GitHub (push / pull_request); it is inert locally.
 name: R-check
@@ -36,13 +47,40 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check for renv.lock
+        id: lockfile
+        run: |
+          if [ -f renv.lock ]; then
+            echo "Found renv.lock; CI will restore the pinned environment."
+            echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No renv.lock; CI will install from the code scan."
+            echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: r-lib/actions/setup-r@v2
         with:
-          # Template baseline. Once renv.lock exists, switch to "renv" so CI
-          # runs on the exact R version the lockfile records instead of a
-          # hardcoded one.
-          r-version: "4.6.1"
+          # "renv" resolves to the R version recorded in renv.lock. Falls back
+          # to the template baseline only while no lockfile exists -- a
+          # hardcoded version alongside a lockfile drifts silently, since the
+          # two agreeing today says nothing about tomorrow.
+          r-version: ${{ steps.lockfile.outputs.has_lockfile == 'true' && 'renv' || '4.6.1' }}
           use-public-rspm: true
+
+      # tar_quarto() shells out to `quarto inspect` while the pipeline is being
+      # constructed, so tar_validate() needs the CLI even though nothing is
+      # rendered here. Without it those targets leave the DAG -- _targets.R
+      # reports that when it happens, which is the local safety net; installing
+      # the CLI is what keeps it from happening in CI at all.
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Restore the pinned environment
+        if: steps.lockfile.outputs.has_lockfile == 'true'
+        uses: r-lib/actions/setup-renv@v2
+        env:
+          # Route restore through pak so system requirements are resolved and
+          # apt-installed in the same pass; renv's own installer does not do it.
+          RENV_CONFIG_PAK_ENABLED: TRUE
 
       # Bootstrap pak from its own repo (an explicit URL, so this does not need
       # a CRAN mirror — the project .Rprofile at the repo root otherwise shadows
@@ -51,8 +89,9 @@ jobs:
       # requirements, which it resolves and apt-installs automatically on GitHub
       # Actions runners.
       #
-      # utils::install.packages(), not install.packages(). Once the downstream
-      # project has renv/activate.R, the .Rprofile activates renv, which
+      # utils::install.packages(), not install.packages(). A checkout can have
+      # renv/activate.R without a lockfile (renv::init() writes the activate
+      # script first), and then the .Rprofile activates renv, which
       # attaches an environment named "renv:shims" on the search path masking
       # install.packages() with renv::install(). A bare call is therefore
       # routed through renv, which ignores the explicit repos below and (with
@@ -70,6 +109,7 @@ jobs:
       # it: apostrophes in comments and $ in R stay literal. Do not switch back
       # to Rscript -e '...' — an apostrophe there closes the shell string.
       - name: Install dependencies (with system requirements) from code
+        if: steps.lockfile.outputs.has_lockfile == 'false'
         run: |
           Rscript - <<'RSCRIPT'
           utils::install.packages("pak", repos = sprintf(
