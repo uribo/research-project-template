@@ -226,7 +226,7 @@ Rscript -e 'Sys.getlocale("LC_COLLATE")'   # "C" と出ること
 - 探索的分析ノート: `notes/`（`.qmd`）
 - 原稿ドラフト: `paper/`（`.qmd`）
 - 数値の引用は `tar_read()` / `tar_load()` 経由で動的に解決する（下記 Data Reference Policy）
-- Quarto のレンダーは Quarto CLI を前提とする。`notes/` の QMD は `tarchetypes::tar_quarto()` でパイプラインに組み込めるが、CLI 未導入環境では当該ターゲットが落ちる点に留意
+- Quarto のレンダーは Quarto CLI を前提とする。`notes/` の QMD は `tarchetypes::tar_quarto()` でパイプラインに組み込めるが、**CLI 未導入環境では当該ターゲットが DAG から外れる**。`_targets.R` はその際に除外したターゲット数とパスを `message()` で報告する（黙って外れると `tar_validate()` の緑が本番より狭い範囲しか意味しなくなる）。CI は Quarto CLI を導入するので、この分岐が効くのはローカルのみ
 - `notes/` の QMD を CLI で単体レンダーすると R チャンクの作業ディレクトリが `notes/` になり、`tar_load()`/`tar_read()` が既定で `notes/_targets/` を探して失敗する。`notes/_targets.yaml`（`store: ../_targets/`）でルートのストアに向けているため、setup チャンクは `tar_load(example_summary)` を `store` 引数なしで書ける
 - ノート間リンクは **ソースでは `.qmd`** で書く（編集・GitHub 閲覧・tar_quarto 依存解決に好都合）。`notes/qmd-links-to-html.lua`（`notes/_metadata.yml` の `filters:` に登録済み）が HTML レンダー時のみ相対 `.qmd` リンクを `.html` に書き換えるため、レンダー済み HTML をブラウザで開いた際に生テキストではなくレンダー済みページへ遷移する（#anchor 保持・外部 URL/非 qmd は不変）
 
