@@ -108,7 +108,7 @@ git config core.hooksPath .githooks
 
 以前はこの切り替えを「任意の手動ステップ」としていたが、実際に見落とされた。2026-08-20 時点で生成先 5 件のうち 3 件が `renv.lock` を持ちながら CI では最新版を入れており、3 件が lockfile と無関係な R バージョンを固定していた。**CI は緑のまま、プロジェクトが使っていない環境をテストしていた**。忘れようのない仕組みのほうが、判断に委ねるより価値が高いと判断した。
 
-Quarto CLI も CI で導入する。`tarchetypes::tar_quarto()` は構築時に `quarto inspect` を呼ぶため、CLI が無いと当該ターゲットが DAG から外れ、`tar_validate()` が本番より小さいパイプラインを検証してしまう（しかもそれを報告しない）。
+Quarto CLI も CI で導入する。`tarchetypes::tar_quarto()` は構築時に `quarto inspect` を呼ぶため、CLI が無いと当該ターゲットが DAG から外れ、`tar_validate()` が本番より小さいパイプラインを検証してしまう。`_targets.R` は外したターゲット数とパスを `message()` で報告するので**ローカルでは気づける**が、CI は無人で走るうえ緑のログを誰も読まないため、報告に頼らず CLI を入れて DAG を欠けさせない。
 
 `.github/workflows/renv-update.yaml` は日次（JST 早朝）に起動するが、`gate` ジョブがリポジトリ名のハッシュから割り当てた **週 1 回の曜日にのみ**更新を実行する（手動 `workflow_dispatch` は常に実行）。これにより、このテンプレートから作成した複数プロジェクトの renv-update PR が同じ曜日に一斉発火せず、レビュー負荷が週内に分散する。下流プロジェクトがまだ `renv.lock` を採用していない場合は何もせず終了し、更新差分がある場合だけ `automation/renv-update` ブランチを作成・更新して PR を開く。`renv` 自身の更新で `renv/activate.R` が変わる場合も同じ PR に含める。`renv::snapshot()` は下流プロジェクトの `snapshot.type` に従うため、PR ではパッケージ削除も含めて確認する。`_targets.R` や `tests/testthat.R` が無いプロジェクトでは該当 validation を skip する。なお `GITHUB_TOKEN` が作成・更新した PR は、通常の push や PAT 由来の PR と異なり別 workflow を追加起動しない点に注意する。
 

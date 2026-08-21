@@ -20,8 +20,9 @@
 # forget is worth more here than one left to judgement.
 #
 # Quarto IS installed. The pipeline drops its Quarto targets when the CLI is
-# absent, so a CI without Quarto validates a smaller DAG than the project has
-# and says nothing about it -- the same shape of quiet gap as above.
+# absent, so a CI without Quarto validates a smaller DAG than the project has.
+# _targets.R now names what it dropped, but a reported gap is still a gap: the
+# line scrolls past in a green log, and nothing downstream acts on it.
 #
 # This workflow runs only on GitHub (push / pull_request); it is inert locally.
 name: R-check
@@ -68,7 +69,9 @@ jobs:
 
       # tar_quarto() shells out to `quarto inspect` while the pipeline is being
       # constructed, so tar_validate() needs the CLI even though nothing is
-      # rendered here. Without it those targets silently leave the DAG.
+      # rendered here. Without it those targets leave the DAG -- _targets.R
+      # reports that when it happens, which is the local safety net; installing
+      # the CLI is what keeps it from happening in CI at all.
       - uses: quarto-dev/quarto-actions/setup@v2
 
       - name: Restore the pinned environment

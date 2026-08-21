@@ -137,8 +137,9 @@ jobs:
 
       # tar_quarto() shells out to `quarto inspect` while the pipeline is being
       # constructed, so tar_validate() needs the CLI even though this job never
-      # renders a note. Without it those targets leave the DAG and the
-      # validation silently covers less than the project contains.
+      # renders a note. Without it those targets leave the DAG, and the
+      # validation covers less than the project contains -- _targets.R prints
+      # what it excluded, but this job runs unattended, so nobody reads it.
       - uses: quarto-dev/quarto-actions/setup@v2
         if: steps.update.outputs.has_changes == 'true' && hashFiles('_targets.R') != ''
 
