@@ -8,3 +8,9 @@ Read and follow `CLAUDE.md` as the primary source of project knowledge and conve
 - Safe templates such as `Renviron.example` may be read and edited, but must contain placeholders only.
 - Do not bypass `.codex/config.toml` environment filtering or override `R_ENVIRON_USER` unless the user explicitly approves access for a specific task.
 - If a task needs authenticated API access, explain which credential or environment variable is required and obtain approval before enabling it. Never include credential values in prompts, logs, command output, or commits.
+
+## Handoff from Claude Code
+
+- Before starting, read the "引き継ぎ（HANDOFF）" block at the top of `memory/project-status.md`, then check `git status` and `git diff`. Do not discard existing changes.
+- Treat recorded decisions as claims: confirm them against the code and test results before building on them.
+- When you finish or stop, update the HANDOFF block (current approach, the single next task, failed attempts, unverified items, last verification command and result).
