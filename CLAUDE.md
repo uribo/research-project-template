@@ -123,6 +123,7 @@ process_data <- function(raw_data, year) {
 - 全ターゲットに `description` 引数で日本語の処理概要を付与する
 - 並列実行: `crew` + `mirai`（`tar_option_set(controller = crew::crew_controller_local(...))`）。`_targets.R` にコメントで雛形を用意
 - 重い再計算・再取得不能な外部データには `gittargets` を利用してストアをスナップショットする（運用は「再現性」の gittargets 節）
+- **数値結果を直接左右するパッケージは `tar_option_set(imports = ...)` に載せる**（モデル推定・乱数・数値計算系に限定。整形系は載せない）。targets は既定でパッケージを黒箱として扱うため、パッケージ更新では既存ターゲットが無効化されない。`imports` に載せた名前空間は自作関数と同様にハッシュされ、関数定義が変われば下流ターゲットが invalidate される（版だけ上がって定義が同一なら再計算は走らない）。`packages` にも併記する。**限界**: C/C++ 等のコンパイル済み部分の変更は見えないため、reproducibility sentinel と「lockfile 更新後の再ビルド規律」（「再現性」節）の代替ではなく補完
 - **全データフレームターゲットに `validate_*()` 関数を設ける**。検証項目はデータの意味的整合性（キーの一意性、値域、NA 許容範囲）に集中。モデルオブジェクト・図表出力は対象外
 - データバリデーション（`pointblank`）は独立ターゲットにせず、処理関数内で `stop_on_fail()` によるアサーションとして組み込む
 - **検証を「列の有無」で条件分岐させない**。`if ("dayflag" %in% names(data))` のような分岐は、水準が 1 つでも列自体は存在するため常に真になり、**検証が静かに無効化される**（検証があるのに何も検証していない状態は、検証が無いより危険）。分岐が必要なら列の存在ではなく**値の状態**（水準数・NA 率）で判定し、分岐したこと自体をログに出す
@@ -145,7 +146,8 @@ process_data <- function(raw_data, year) {
 - ブートストラップ・順列検定・シミュレーションのシードは必ず設定する。グローバル `set.seed()` より `withr::with_seed()` を優先
 - 実行環境の非決定要因を固定する: TZ は `.Rprofile`、照合順序（`LC_COLLATE`）は後述の 3 層で固定する。成果物には環境記録を残す（`sessioninfo::session_info()` を `notes/`・`paper/` の QMD 末尾に）
 - **R バージョンの固定**: 正典は `renv.lock` の `R.Version`。CI は両 workflow とも `renv.lock` があれば `r-version: "renv"` を使い、無い間だけテンプレート基準の R に落ちる。**手動での切り替えは不要**（以前は `R-check.yaml` を手で書き換える運用だったが、生成先 5 件中 3 件が lockfile と無関係な R を固定したままだったため自動判定にした）。エディタ設定（`.vscode/`）でのインタープリタ絶対パス指定はマシン固有になるため行わない
-- **数値 reproducibility sentinel を置く**: `targets::tar_validate()` は DAG 構造しか検査せず、targets はパッケージ版を cue に含めないため、`renv` 更新は既存ターゲットを無効化せず数値 drift を素通りさせる。主要導出値（サンプルサイズ・係数・要約統計）を許容誤差でピン留めした testthat テストを `tests/testthat/` に置き、commit 済みの小さな fixture（本番データが gitignored / 再配布不可なら合成データ）に対して検証する。`tests/testthat.R` 経由で `renv-update` workflow の tests ステップでも走り、パッケージ更新による drift を fail-loud で PR に赤表示する（雛形: `tests/testthat/test-reproducibility.R`）。**限界を明示**: これは代表 fixture による drift 検出であり、`sentinel が通る = 論文結果が完全再現` ではない。CI は本番データを持たないため、完全な数値再現はローカルで本番データに対し `tar_make()` を再走して論文時の値と突き合わせて検証する
+- **数値 reproducibility sentinel を置く**: `targets::tar_validate()` は DAG 構造しか検査せず、targets はパッケージ版を cue に含めないため（`tar_option_set(imports = ...)` に載せた名前空間を除く。「targets パイプライン」節）、`renv` 更新は既存ターゲットを無効化せず数値 drift を素通りさせる。主要導出値（サンプルサイズ・係数・要約統計）を許容誤差でピン留めした testthat テストを `tests/testthat/` に置き、commit 済みの小さな fixture（本番データが gitignored / 再配布不可なら合成データ）に対して検証する。`tests/testthat.R` 経由で `renv-update` workflow の tests ステップでも走り、パッケージ更新による drift を fail-loud で PR に赤表示する（雛形: `tests/testthat/test-reproducibility.R`）。**限界を明示**: これは代表 fixture による drift 検出であり、`sentinel が通る = 論文結果が完全再現` ではない。CI は本番データを持たないため、完全な数値再現はローカルで本番データに対し `tar_make()` を再走して論文時の値と突き合わせて検証する
+- **lockfile 更新は再ビルドの契機**: renv-update PR の merge や手動 `renv::update()` の後は `tar_make()` を回し直し、ストアを現行 lockfile の環境で作り直す。`imports` 外のパッケージ更新を `tar_outdated()` は報告しないため、**何も outdated に見えないのは「整合している」ではなく「見えていない」**。放置すると、旧環境で計算されたオブジェクトが現行 lockfile で作ったかのような顔でストアに残り、`tar_read()` 経由で原稿に「lockfile が主張する環境では再現できない数値」が載る。gittargets 導入プロジェクトでのスナップショットの順序は gittargets 節を参照
 - `renv-update` workflow は開発フェーズの依存衛生ツール。**原稿投稿後・査読中・出版アーカイブ後は凍結**する（グローバル方針の as-submitted freeze）。凍結は「PR を無視」ではなく **workflow を無効化**する方が堅い（`gh workflow disable renv-update`、または schedule をコメントアウト）。誤 merge リスクとノイズを減らせる。開発再開時は `workflow_dispatch` で手動起動すれば足りる
 
 #### 照合順序（`LC_COLLATE`）の固定
@@ -199,7 +201,8 @@ Rscript -e 'Sys.getlocale("LC_COLLATE")'   # "C" と出ること
 `_targets/` は gitignored なので、意図しない再計算で上書きされたオブジェクトは復元できない。gittargets はストアを独立 git リポジトリ（`_targets/.git`）として管理し、コード側のコミット SHA に紐付く `code=<SHA>` ブランチにバイトを保存する。**時間遡及不可の外部ソース（版指定取得に対応しない API 等）を扱うプロジェクトでは導入する**。実例: 2026-07 に IUCN Red List API が 2025-2 → 2026-1 に更新され、版チェックの abort を外して `tar_make()` した結果、葉ターゲットの一部が新版で置換されて復元不能になった。
 
 - **これは再現性の担保ではなくローカルの復旧点**。上のハイアラーキ第 3 段（バイト凍結＋`PROVENANCE.md`）が恒久対処であり、スナップショットはその凍結・修復作業自体を巻き戻すための保険。両者を一つの仕組みに背負わせない
-- **スナップショットは破壊的操作の「前」に取る**: 外部 API 由来サブツリーの再構築、`tar_destroy()`、ターゲット定義の大きな変更、版チェック等のガードを外す作業。事故の後では手遅れ
+- **スナップショットは破壊的操作の「前」に取る**: 外部 API 由来サブツリーの再構築、`tar_destroy()`、ターゲット定義の大きな変更、版チェック等のガードを外す作業、そして renv lockfile 更新に伴う再ビルド。事故の後では手遅れ
+- **lockfile 更新時のスナップショットは「前後 2 回・別コミット上で」**: スナップショットは `code=<SHA>` ブランチでコード側コミットに紐付くため、(1) renv-update PR を merge する**前**（または手動 `renv::update()` の前）に旧コミット上でスナップショット → (2) merge / update 後に `tar_make()` で再ビルド → (3) lockfile 更新を含む新コミット上で再スナップショット、の順を守る。この順でないと「旧 lockfile ↔ 旧ストア」の対応が台帳に残らず、更新後に drift が発覚しても巻き戻し先を特定できない
 - **fail-loud な abort が実質的なデータ保護として機能している場合がある**。外す前に `tar_outdated()` で「外したら何が走るか」を確認し、スナップショットを取ってから外す
 - 初期化は `tar_git_init(git_lfs = FALSE)`。LFS フィルタが効かない環境では checkout が pointer file を返し、**復旧経路でこそ静かに壊れる**。ローカル専用リポジトリなら plain git で足りる
 - `tar_git_snapshot(status = FALSE)` を既定にする。既定の `status = interactive()` は `tar_outdated()` を走らせてパイプライン定義を評価するため、保全操作に副作用が乗る。ラッパ関数を `R/` に置いて既定を固定するとよい

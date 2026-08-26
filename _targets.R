@@ -10,6 +10,18 @@ targets::tar_option_set(
   format = "rds"
   # error = "stop" (the default): a failing target halts the pipeline. Do not
   # switch to "continue"; it hides failures and breaks the fail-loud principle.
+  # imports: list result-critical packages (model fitting, RNG, numerical
+  # methods) here so that updating them invalidates dependent targets. By
+  # default targets treats packages as black boxes -- a renv update changes no
+  # hash, so cached objects silently stop matching the lockfile. Packages in
+  # imports have their namespace hashed like project code: dependents rerun
+  # when function definitions change, and a version bump with identical code
+  # correctly invalidates nothing. Keep the list short (each namespace is
+  # hashed on every run), add each entry to `packages` above too, and know the
+  # limit: compiled C/C++/Fortran changes are invisible here, so this
+  # complements -- not replaces -- the reproducibility sentinel tests and the
+  # post-lockfile-update rebuild discipline (CLAUDE.md).
+  # imports = c("lme4"),
   # Parallel execution with crew + mirai (uncomment when needed):
   # controller = crew::crew_controller_local(workers = 4)
 )
