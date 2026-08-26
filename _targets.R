@@ -10,18 +10,26 @@ targets::tar_option_set(
   format = "rds"
   # error = "stop" (the default): a failing target halts the pipeline. Do not
   # switch to "continue"; it hides failures and breaks the fail-loud principle.
-  # imports: list result-critical packages (model fitting, RNG, numerical
-  # methods) here so that updating them invalidates dependent targets. By
-  # default targets treats packages as black boxes -- a renv update changes no
-  # hash, so cached objects silently stop matching the lockfile. Packages in
-  # imports have their namespace hashed like project code: dependents rerun
-  # when function definitions change, and a version bump with identical code
-  # correctly invalidates nothing. Keep the list short (each namespace is
-  # hashed on every run), add each entry to `packages` above too, and know the
-  # limit: compiled C/C++/Fortran changes are invisible here, so this
-  # complements -- not replaces -- the reproducibility sentinel tests and the
-  # post-lockfile-update rebuild discipline (CLAUDE.md).
-  # imports = c("lme4"),
+  # Package-version pin: targets does not include package versions in cues,
+  # so a renv update leaves the store silently stale and tar_outdated()
+  # reports nothing. tar_option_set(imports) cannot bridge this under this
+  # template's style -- namespace-qualified calls (pkg::fun()) are not
+  # tracked as free symbols (tar_deps(coxme::coxme(x)) returns only "::" and
+  # "x"), and some namespaces (survival, glmmTMB, emmeans) even break the
+  # DAG when imported. Pin versions with a target instead, and reference it
+  # from result-critical targets only:
+  #
+  #   tar_target(model_pkg_versions, sapply(
+  #     c("lme4"), \(p) as.character(packageVersion(p))
+  #   )),
+  #   tar_target(fit, { model_pkg_versions; fit_model(analysis_data) })
+  #
+  # A version bump then invalidates fit even when the R code is identical --
+  # coarser than imports would have been, but it actually fires. Non-R
+  # backends (CmdStan etc.) join the same mechanism by including their
+  # version in the pin target. Complements -- not replaces -- the
+  # reproducibility sentinel tests and the post-lockfile-update rebuild
+  # discipline (CLAUDE.md).
   # Parallel execution with crew + mirai (uncomment when needed):
   # controller = crew::crew_controller_local(workers = 4)
 )

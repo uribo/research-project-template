@@ -168,7 +168,7 @@ jobs:
             echo "Note: renv::snapshot() uses this project's snapshot.type."
             echo "Review package removals as well as version updates."
             echo
-            echo "After merging, re-run tar_make() locally to rebuild the store under the updated lockfile: targets does not invalidate cached objects for package updates outside tar_option_set(imports), so tar_outdated() will report nothing. With gittargets, snapshot the store on the pre-merge commit first (see CLAUDE.md, gittargets section)."
+            echo "After merging, re-run tar_make() locally to rebuild the store under the updated lockfile: targets does not invalidate cached objects on package updates unless a version-pin target covers them, so tar_outdated() may report nothing. With gittargets, snapshot the store on the pre-merge commit first (see CLAUDE.md, gittargets section)."
             echo
             echo "Validation run:"
             if [ -f _targets.R ]; then
