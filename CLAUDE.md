@@ -36,7 +36,7 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 ├── paper/             # 原稿（Quarto .qmd）
 ├── figures/           # 生成図
 ├── memory/            # プロジェクト固有知識（会話間引き継ぎ）
-├── prompts/           # Claude Code 作業プロンプトログ
+├── prompts/           # Codex への委任ブリーフ（通常作業のログは置かない）
 └── tests/             # testthat
 ```
 
@@ -44,16 +44,12 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 
 ## 作業時の注意
 
-### Prompt Logging Rule
+### Delegation Brief Rule（`prompts/`）
 
-- すべての作業は、最初に使用したプロンプトを `prompts/YYYYMMDD-HHMM-task-name.md` に保存してから開始する
-- 年月日時刻は日本標準時（JST）の現在時刻を使用する
-    - `TZ=Asia/Tokyo date '+%Y%m%d-%H%M'`
-- ウェブサイトや外部リソースを参照する場合は、あらかじめユーザーに確認を取り、参照した URL・タイトル・要約をプロンプトファイルに記録する
-- 作業終了時に以下を実行する:
-    - プロンプトファイル末尾に `作業終了: YYYY-MM-DD HH:MM` を記述する
-    - 作業中に発覚した問題・課題・気づきを整理してユーザーに通知する
-- このファイルが存在しない場合でも作業を開始してよいが、会話の途中からでも遡って作成する
+- `prompts/` は **Claude → Codex の委任ブリーフ専用**。通常の作業でプロンプト原文・終了時刻・気づきの要約を保存する義務は**無い**（2026-08-28 に廃止）。現在の状態と次の作業は `memory/project-status.md` 先頭の HANDOFF、捨てた方法と未解決の問題は Issue（無ければ `TODO.md`）、完了した変更の理由は commit message に書く。`prompts/*.md` は gitignored なので、別マシン・fresh checkout で読める記録にはならない
+- ブリーフは `prompts/YYYYMMDD-HHMM-<topic>.md`（JST: `TZ=Asia/Tokyo date '+%Y%m%d-%H%M'`）。元の依頼、スコープと除外、受け入れ条件、既知の制約、「検証すべき主張」としての既存判断、参照 URL、要求する検証手順を含める
+- **HANDOFF にブリーフの正確なパスを書く**。Codex は `prompts/` を自動では読まない（`AGENTS.md` が読ませるのは HANDOFF・`git status`・`git diff` のみ）
+- 外部 URL を参照しても、それだけでファイルは作らない。URL はそれを根拠とする判断のそば（Issue / `TODO.md` / `data-raw/PROVENANCE.md` / ブリーフ / ドキュメント）に書く。ウェブ参照の前にユーザー確認を取る規約は変わらない
 
 ### GitHub Issue 操作
 
