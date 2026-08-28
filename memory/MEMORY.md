@@ -5,4 +5,4 @@
 | file | type | description | updated |
 |---|---|---|---|
 | project-overview.md | project | 目的・構成・技術スタック | {{DATE}} |
-| project-status.md | project | 現在の進捗・直近の作業 | 2026-08-26 |
+| project-status.md | project | 現在の進捗・直近の作業 | 2026-08-28 |
