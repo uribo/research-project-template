@@ -21,6 +21,31 @@
 # Keep this line even if you add no secrets: it is the primary pin.
 LC_COLLATE=C
 
+# Pin date-part names. LC_TIME drives the month and weekday names produced by
+# format()/strftime() with %b, %B, %a and %A -- and therefore the default date
+# axis labels of ggplot2, which call format() underneath. Unpinned under
+# LANG=ja_JP.UTF-8 a date axis renders as "1月 / 2月 / 3月" instead of
+# "Jan / Feb / Mar", so an English-language manuscript silently acquires
+# Japanese figure labels. Nothing errors: the figure simply comes out wrong,
+# and it comes out differently on a machine with a different LANG.
+#
+# Unlike LC_COLLATE this also changes *parsing*: as.Date(x, format = "%B") on
+# Japanese month names stops matching once this is C. Before keeping the line,
+# check the project for %b/%B inside a parsing call -- if it reads localized
+# date strings, pin to the locale those strings are in rather than to C.
+LC_TIME=C
+
+# Do NOT collapse the two lines above into LC_ALL. LC_ALL overrides every
+# category including LC_CTYPE, which governs character classification for
+# non-ASCII text. Under LC_ALL=C a comparison such as `area == "沖縄県"` stops
+# matching and the rows it selected vanish from the result -- with no error and
+# no warning. That is a missing-row defect, not a crash, so it survives a green
+# test run. Pin the individual categories.
+#
+# Found 2026-08-28 in 23_YahAuc_centipede: LC_ALL=C, reached for to fix exactly
+# the date labels described above, dropped three rows from a Supplement table.
+# Only a byte comparison against a reference output caught it.
+
 # --- project ---------------------------------------------------------------
 # Contact email used in the HTTP User-Agent for polite API access.
 CONTACT_EMAIL={{CONTACT_EMAIL}}

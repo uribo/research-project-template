@@ -26,21 +26,38 @@ if (file.exists("renv/activate.R")) {
   source("renv/activate.R")
 }
 
-# Collation pin, layer 3 of 3. LC_COLLATE drives sort()/order()/factor() level
-# order and is a silent source of cross-machine differences -- even for pure
-# ASCII, where C sorts by code point ("Zebra" < "apple") and most system
-# locales sort case-insensitively ("apple" < "Zebra").
+# Locale pin, layer 3 of 3. Two categories are pinned, for two different
+# reasons:
+#
+#   LC_COLLATE drives sort()/order()/factor() level order and is a silent
+#   source of cross-machine differences -- even for pure ASCII, where C sorts
+#   by code point ("Zebra" < "apple") and most system locales sort
+#   case-insensitively ("apple" < "Zebra").
+#
+#   LC_TIME drives the month and weekday names from format()/strftime() with
+#   %b/%B/%a/%A, and so the default date axis labels of ggplot2. Unpinned under
+#   LANG=ja_JP.UTF-8 a date axis reads "1月 / 2月 / 3月" instead of
+#   "Jan / Feb / Mar" -- an English manuscript quietly gets Japanese figures.
+#   Note this category also affects parsing: as.Date(x, format = "%B") on
+#   localized month names stops matching under C. A project that reads such
+#   strings should pin to their locale instead of removing the pin.
+#
+# Never pin either of these with LC_ALL. LC_ALL overrides LC_CTYPE as well, and
+# under LC_ALL=C a comparison like `area == "沖縄県"` silently stops matching,
+# so the selected rows vanish from the output with no error raised. See
+# Renviron.example for the incident that established this.
 #
 # The three layers, and why one is not enough:
 #
-#   1. Renviron.example -> .Renviron   LC_COLLATE=C in the environment.
-#      The primary pin: renv's reset (see below) reads the environment, so it
-#      lands back on C. Requires the user to have copied .Renviron.
+#   1. Renviron.example -> .Renviron   LC_COLLATE=C and LC_TIME=C in the
+#      environment. The primary pin: renv's reset (see below) reads the
+#      environment, so it lands back on C. Requires the user to have copied
+#      .Renviron.
 #   2. .claude/settings.json, .codex/config.toml
 #      Agent sessions set R_ENVIRON_USER=/dev/null to keep credentials out of
 #      model-initiated processes. R treats ./.Renviron as the *user* Renviron,
-#      so that also suppresses layer 1 -- hence LC_COLLATE is set there too.
-#   3. this line
+#      so that also suppresses layer 1 -- hence both are set there too.
+#   3. these lines
 #      Fallback for a checkout with no .Renviron and no agent config.
 #
 # This line MUST come after renv activates. `renv/activate.R` can reset
@@ -58,4 +75,6 @@ if (file.exists("renv/activate.R")) {
 # it had silently defeated the pin in four downstream projects.
 #
 # Verify: Rscript -e 'Sys.getlocale("LC_COLLATE")'  -> must print "C"
+#         Rscript -e 'Sys.getlocale("LC_TIME")'     -> must print "C"
 invisible(Sys.setlocale("LC_COLLATE", "C"))
+invisible(Sys.setlocale("LC_TIME", "C"))
