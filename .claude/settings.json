@@ -3,7 +3,8 @@
   "respectGitignore": true,
   "env": {
     "R_ENVIRON_USER": "/dev/null",
-    "LC_COLLATE": "C"
+    "LC_COLLATE": "C",
+    "LC_TIME": "C"
   },
   "permissions": {
     "deny": [

@@ -7,9 +7,11 @@ approval_policy = "on-request"
 #
 # That suppression has a side effect worth naming: R treats ./.Renviron as the
 # *user* Renviron, so pointing R_ENVIRON_USER at /dev/null disables the
-# project's copy too -- including the LC_COLLATE pin it carries. LC_COLLATE is
-# therefore set here as well, so agent sessions get the same collation as a
-# human terminal. See Renviron.example and .Rprofile.
+# project's copy too -- including the LC_COLLATE and LC_TIME pins it carries.
+# Both are therefore set here as well, so agent sessions get the same collation
+# and the same date-part names as a human terminal. Never merge them into
+# LC_ALL: that also overrides LC_CTYPE, so non-ASCII comparisons stop matching
+# and drop rows with no error. See Renviron.example and .Rprofile.
 [shell_environment_policy]
 inherit = "core"
 ignore_default_excludes = false
@@ -22,4 +24,4 @@ exclude = [
   "AZURE_*",
   "GOOGLE_APPLICATION_CREDENTIALS",
 ]
-set = { R_ENVIRON_USER = "/dev/null", LC_COLLATE = "C" }
+set = { R_ENVIRON_USER = "/dev/null", LC_COLLATE = "C", LC_TIME = "C" }
