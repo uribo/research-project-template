@@ -113,12 +113,22 @@ jobs:
         if: steps.lockfile.outputs.has_lockfile == 'true'
         run: |
           Rscript - <<'RSCRIPT'
-          options(
-            repos = c(CRAN = Sys.getenv(
-              "RSPM",
-              "https://packagemanager.posit.co/cran/latest"
-            ))
-          )
+          # Keep the repository URL the lockfile records pointing at CRAN
+          # rather than the moving "latest" Posit Package Manager snapshot the
+          # runner is configured with. Both lines are needed: use-public-rspm
+          # sets RENV_CONFIG_REPOS_OVERRIDE, which renv honours ahead of
+          # options(repos), so pinning options alone leaves the PPM URL in the
+          # lockfile (measured in uribo/renv-update-smoke, 2026-09-05).
+          #
+          # This fixes the recorded URL only. Each package's Repository field
+          # is stamped by whatever installed it, and pak fetches P3M Linux
+          # binaries whatever options(repos) and use-public-rspm say, so
+          # packages this job updates carry a P3M value. Those stamps are
+          # sticky: renv keeps the record of a package whose version did not
+          # change. Do not add a step to rewrite them; restore does not depend
+          # on the field.
+          Sys.unsetenv("RENV_CONFIG_REPOS_OVERRIDE")
+          options(repos = c(CRAN = "https://cloud.r-project.org"))
           renv::restore(prompt = FALSE)
           renv::update(prompt = FALSE, lock = TRUE)
           # Make the lockfile write explicit. With pak enabled, update(lock =
