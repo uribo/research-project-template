@@ -79,6 +79,7 @@ R 側のデータパイプラインは `targets` で管理する。`_targets.R` 
 ### スタイル
 
 - [tidyverse スタイル](https://style.tidyverse.org/)を [air](https://posit-dev.github.io/air/) でフォーマット（編集時に hook で自動実行）
+- [jarl](https://jarl.etiennebacher.com/) で lint（同じ hook で air の後に実行、CI の `lint` job でも検査）。**整形は air、lint は jarl** と役割が分かれており、jarl は整形ルールを持たないので両者は競合しない。設定は `jarl.toml`、エディタ拡張は `etiennebacher.jarl-vscode`。ローカルと CI で同じ版を使う（現在 0.6.0）
 - ネイティブパイプ `|>` のみを使用（`%>%` は不可）
 - モダン tidyverse パターン: `.by` 引数、`join_by()`、`purrr::map() |> list_rbind()` 等
 - 関数にはパッケージ名前空間プレフィックスを付ける: `dplyr::filter()`、`readr::read_csv()`（例外: `library(ggplot2)` をトップで読む場合の `ggplot2` 関数）
@@ -343,6 +344,9 @@ Rscript -e 'targets::tar_visnetwork()'
 
 # フォーマット（通常は編集時 hook で自動実行される）
 air format .
+
+# lint（同上。--fix は関数本体を書き換えるので、_targets の再計算を確認してから使う）
+jarl check .
 ```
 
 ## Skills（Claude Code 向け）
