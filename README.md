@@ -28,9 +28,23 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 | R (4.6.1 基準) | 解析本体。CI（R-check）と同じ基準版。renv.lock 生成後はその記録版が正 | `Rscript --version` |
 | [renv](https://rstudio.github.io/renv/) | パッケージ管理 | `Rscript -e 'packageVersion("renv")'` |
 | [air](https://posit-dev.github.io/air/) | R フォーマッタ | `air --version` |
+| [jarl](https://jarl.etiennebacher.com/) 0.6.0 | R lint（CI と同じ版を使用） | `jarl --version` → `jarl 0.6.0` |
 | [Quarto CLI](https://quarto.org/) | ノート・原稿レンダー | `quarto --version` |
 
-VS Code / Positron では、ワークスペースを開くと [.vscode/extensions.json](.vscode/extensions.json) の推奨拡張（air・Quarto）の導入が提示され、[.vscode/settings.json](.vscode/settings.json) により保存時フォーマット（R: air、.qmd: Quarto）が有効になる。
+VS Code / Positron では、ワークスペースを開くと [.vscode/extensions.json](.vscode/extensions.json) の推奨拡張（air・jarl・Quarto）の導入が提示され、[.vscode/settings.json](.vscode/settings.json) により保存時フォーマット（R: air、.qmd: Quarto）と jarl の診断が有効になる。
+
+jarl CLI は拡張とは別に導入する。[公式のインストール案内](https://jarl.etiennebacher.com/)で紹介されている uv を使う場合は、版を指定する（uv 自体は事前に導入する）。
+
+```bash
+uv tool install 'jarl-linter==0.6.0'
+uv tool update-shell
+# Open a new terminal after updating PATH.
+command -v jarl
+jarl --version
+jarl check .
+```
+
+`jarl --version` が `jarl 0.6.0` を返すことを確認する。別の版が出る場合は `command -v jarl` で実行ファイルを特定し、PATH の優先順位や既存のインストールを調整する。エディタも再起動し、その統合ターミナルで同じ版を確認する。`jarl.executableStrategy: environment` は PATH に CLI がないと拡張同梱版へ戻るため、拡張の導入だけでは CI と版が揃わない。Claude Code の編集後 hook も CLI がないと jarl の検査を省略する。版を更新するときはローカル CLI と `.github/workflows/R-check.yaml` の `version`、本手順、`CLAUDE.md` の版表記を同時に更新する。
 
 ## セットアップ
 
