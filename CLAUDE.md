@@ -321,6 +321,12 @@ updated: （YYYY-MM-DD）
 （内容。feedback/project は **Why:** と **How to apply:** を含める）
 ```
 
+### 引き継ぎ（HANDOFF）欄の運用
+
+- `memory/project-status.md` 先頭の HANDOFF 欄は**次のセッションが再開するための最小状態**。欄全体で 40 行以内（空行を除く）を保ち、先頭に「次に行う作業（1 つ）」を置く
+- 恒久知識を HANDOFF に本文で持たない: 採用済みの設計・運用制約 → 本ファイルまたは `memory/<topic>.md`、検証・レビュー報告 → Issue コメント、数値結果 → `notes/` や protocol 文書。HANDOFF にはパス・Issue 番号のポインタ 1 行を残す
+- `## YYYY-MM-DD の追記` のような日付見出しで下へ堆積させない。上書きで更新する。`memory/` は git 管理なので、削った内容は `git log -p memory/project-status.md` で復元できる
+
 ### いつ保存するか
 
 - ユーザーが明示的に「覚えておいて」と指示したとき → 即座に保存
