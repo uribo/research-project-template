@@ -77,7 +77,7 @@ quarto render paper/
 
 | ワークフロー | 起動 | 内容 |
 |---|---|---|
-| [R-check](.github/workflows/R-check.yaml) | push / pull request | `targets::tar_validate()` と `tests/testthat.R` |
+| [R-check](.github/workflows/R-check.yaml) | push / pull request | `lint` job: jarl 0.6.0（`setup-jarl`、R 不要）で `jarl check` / `check` job: `targets::tar_validate()` と `tests/testthat.R` |
 | [renv-update](.github/workflows/renv-update.yaml) | 日次起動（リポジトリ名のハッシュで割り当てた週 1 回の曜日にのみ実行）・`workflow_dispatch` | `renv::update()` の結果を `automation/renv-update` ブランチの PR で提案する |
 
 ### 初回に必要なリポジトリ設定

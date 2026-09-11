@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath'); if echo \"$FILE\" | grep -iqE '\\.(R|r|qmd)$'; then command -v air >/dev/null 2>&1 && air format \"$FILE\" 2>&1; command -v jarl >/dev/null 2>&1 && NO_COLOR=1 jarl check \"$FILE\" 2>&1; fi; exit 0",
+            "command": "FILE=$(jq -r '.tool_input.file_path // .tool_response.filePath'); if echo \"$FILE\" | grep -iqE '\\.(r|rmd|qmd)$'; then command -v air >/dev/null 2>&1 && air format \"$FILE\" 2>&1; command -v jarl >/dev/null 2>&1 && NO_COLOR=1 jarl check \"$FILE\" 2>&1; fi; exit 0",
             "timeout": 30,
             "statusMessage": "Running air format and jarl check..."
           }
