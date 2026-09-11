@@ -62,6 +62,7 @@ rg '\{\{[A-Z_]+\}\}' --glob '!SETUP.md' || echo "no placeholders remaining"
 
 - `README.md`: 冒頭のコメントアウトされた静的バッジ雛形（助成・期間・Obsidian）から必要なものを有効化し、残りは削除する。Obsidian バッジは著者マシン固有の vault を指すため、共同研究者と共有するリポジトリでは有効化しない
 - `CLAUDE.md`: データソース表・コミット scope 表を記入。冒頭の注記 2 行（「テンプレート利用者へ」「テンプレート保守者へ」）を削除。不要なら Appendix（Author-local workflow）も削除
+- `AGENTS.md`: 「Handoff from Claude Code」節の冒頭にある `Template maintainers only` の注記を削除（生成先では HANDOFF を通常どおり更新する）
 - `TODO.md`: Go/No-go ゲートの `Threshold` ほか固定欄、Phase 表を記入
 
 ## 4. renv の初期化
