@@ -11,7 +11,7 @@ updated: 2026-09-10
 
 **次に行う作業（1 つ）**: なし（テンプレート整備は完了。生成済みプロジェクトの HANDOFF 圧縮は任意タイミングで、handoff-guard hook が編集時に超過を警告する）。
 
-**現在の方針**: ロケール固定（`LC_COLLATE=C` / `LC_TIME=C`）、`gittargets` によるストア保全、`renv` 版管理。詳細は [CLAUDE.md#R-プロジェクト共通パターン](CLAUDE.md) を参照。
+**現在の方針**: フォーマット・lint（air + jarl）、ロケール固定（`LC_COLLATE=C` / `LC_TIME=C`）、`gittargets` によるストア保全、`renv` 版管理。詳細は [CLAUDE.md#R-プロジェクト共通パターン](CLAUDE.md) を参照。
 
 **試して失敗したこと**: `.codex/config.toml` への直接書き込みは Codex の読み取り専用保護で拒否。Claude Code 側が代行適用し、Codex で再検証済み。
 
