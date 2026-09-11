@@ -9,15 +9,15 @@ updated: 2026-09-11
 
 ## 引き継ぎ（HANDOFF）
 
-**次に行う作業（1 つ）**: なし。jarl のレビュー対応を完了。導入手順は README・SETUP、到達不能コードの局所的な抑制は CLAUDE.md「R パッケージ管理（renv）」と jarl.toml を参照。
+**次に行う作業（1 つ）**: PR #9 の CI（lint job 含む）が通ることを確認し、merge する。詳細は https://github.com/uribo/research-project-template/pull/9
 
-**現在の方針**: ロケール固定（`LC_COLLATE=C` / `LC_TIME=C`）、`gittargets` によるストア保全、`renv` 版管理。詳細は [CLAUDE.md#R-プロジェクト共通パターン](CLAUDE.md) を参照。
+**最後に実行した検証**: chore/adopt-jarl-lint ブランチで jarl 0.6.0 `jarl check .` → All checks passed。依存宣言スコープ抑制と到達不能コード検出を確認。PR 作成後は CI 実行待ち。
 
-**試して失敗したこと**: `.codex/config.toml` への直接書き込みは Codex の読み取り専用保護で拒否。Claude Code 側が代行適用し、Codex で再検証済み。
+**現在採用している方針**: jarl v0.6.0 による lint（air フォーマットと併用）、ロケール固定（`LC_COLLATE=C` / `LC_TIME=C`）、`gittargets` によるストア保全。詳細は CLAUDE.md「R コード記述」と「R プロジェクト共通パターン」。
 
-**未確認の項目**: GitHub Actions 上の lint job 実行、新規環境での uv による CLI インストール。
+**試して失敗したこと**: `.codex/config.toml` への直接書き込みは Codex の読み取り専用保護で拒否。Claude Code 側が代行適用し、Codex で再検証済み（既解決）。
 
-**最後に実行した検証**: 2026-09-11 jarl 0.6.0 で `jarl check .` → All checks passed、`git diff --check` → 問題なし。一時ディレクトリの既知ケースで、依存宣言だけを抑制し `return()` 後の到達不能コードを検出することを確認。
+**未確認の項目**: GitHub Actions 上の新設 lint job の実行結果、新規環境での jarl CLI インストール手順。
 
 ---
 
