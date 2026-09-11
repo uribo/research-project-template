@@ -12,17 +12,18 @@
 [lint]
 # outer_negation: `any(!is.finite(x))` is the house idiom for validation
 # guards. It states the intent at the call site -- "any bad value is present"
-# -- while `!all(is.finite(x))` inverts that reading for no gain.
+# -- readability takes priority over avoiding element-wise negation here.
 #
-# unreachable_code: `if (FALSE) { requireNamespace("pkg") }` is the deliberate
-# marker that makes a package renv cannot find by scanning (gittargets, called
-# only from the console) visible to renv::snapshot(). Deleting it as dead code
-# fails silently -- renv::restore() then rolls back while still reporting
-# success -- so the rule is off rather than left to be "cleaned up".
-ignore = ["outer_negation", "unreachable_code"]
+# Keep unreachable_code enabled to catch unintended dead code. For deliberate
+# renv dependency declarations, put this comment directly above `if (FALSE)`:
+#   # jarl-ignore unreachable_code: Declare an optional dependency for renv.
+# This suppresses only the declaration; the rule has no automatic fix.
+ignore = ["outer_negation"]
 
 [lint.missing_argument]
 # case_when() and tribble() accept trailing commas the way mutate() does, but
 # they are absent from jarl's default skip list, so a trailing comma there is
 # reported as a forgotten argument.
+# This skips all missing arguments in these calls, including accidental empty
+# arguments between commas, not just trailing commas. Namespaced calls match too.
 extend-skipped-functions = ["case_when", "tribble"]
