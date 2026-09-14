@@ -33,7 +33,19 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 
 VS Code / Positron では、ワークスペースを開くと [.vscode/extensions.json](.vscode/extensions.json) の推奨拡張（air・jarl・Quarto）の導入が提示され、[.vscode/settings.json](.vscode/settings.json) により保存時フォーマット（R: air、.qmd: Quarto）と jarl の診断が有効になる。
 
-jarl CLI は拡張とは別に導入する。[公式のインストール案内](https://jarl.etiennebacher.com/)で紹介されている uv を使う場合は、版を指定する（uv 自体は事前に導入する）。
+jarl CLI は拡張とは別に導入する。macOS では Homebrew で入れる（air も `brew install air` で入るので、両方を同じ経路で管理できる）。
+
+```bash
+brew install jarl
+jarl --version
+# Stop `brew upgrade` from moving jarl away from the CI version.
+brew pin jarl
+jarl check .
+```
+
+Homebrew の formula は常に最新版を指し、版を指定して入れられない。そのため `brew install` の直後に `jarl --version` が CI と同じ `jarl 0.6.0` を返すことを確かめてから `brew pin jarl` で固定する。固定しないと、`brew upgrade` でローカルだけ新しい版に上がり、ローカルと CI で指摘内容が食い違う。Homebrew が既に新しい版しか提供していない場合は、CI 側を上げる（下記の「版を更新するとき」）か、次の uv で版を指定して入れる。
+
+Homebrew を使わない環境や、版を指定して入れたい場合は、[公式のインストール案内](https://jarl.etiennebacher.com/)で紹介されている uv を使う（uv 自体は事前に導入する）。
 
 ```bash
 uv tool install 'jarl-linter==0.6.0'
@@ -44,7 +56,7 @@ jarl --version
 jarl check .
 ```
 
-`jarl --version` が `jarl 0.6.0` を返すことを確認する。別の版が出る場合は `command -v jarl` で実行ファイルを特定し、PATH の優先順位や既存のインストールを調整する。エディタも再起動し、その統合ターミナルで同じ版を確認する。`jarl.executableStrategy: environment` は PATH に CLI がないと拡張同梱版へ戻るため、拡張の導入だけでは CI と版が揃わない。Claude Code の編集後 hook も CLI がないと jarl の検査を省略する。版を更新するときはローカル CLI と `.github/workflows/R-check.yaml` の `version`、本手順、`CLAUDE.md` の版表記を同時に更新する。
+`jarl --version` が `jarl 0.6.0` を返すことを確認する。別の版が出る場合は `command -v jarl` で実行ファイルを特定し、PATH の優先順位や既存のインストール（Homebrew と uv の二重導入など）を調整する。エディタも再起動し、その統合ターミナルで同じ版を確認する。`jarl.executableStrategy: environment` は PATH に CLI がないと拡張同梱版へ戻るため、拡張の導入だけでは CI と版が揃わない。Claude Code の編集後 hook も CLI がないと jarl の検査を省略する。版を更新するときはローカル CLI（Homebrew なら `brew unpin jarl && brew upgrade jarl && brew pin jarl`）と `.github/workflows/R-check.yaml` の `version`、本手順、`CLAUDE.md` の版表記を同時に更新する。
 
 ## セットアップ
 
