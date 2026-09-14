@@ -56,7 +56,15 @@ jarl --version
 jarl check .
 ```
 
-`jarl --version` が `jarl 0.6.0` を返すことを確認する。別の版が出る場合は `command -v jarl` で実行ファイルを特定し、PATH の優先順位や既存のインストール（Homebrew と uv の二重導入など）を調整する。エディタも再起動し、その統合ターミナルで同じ版を確認する。`jarl.executableStrategy: environment` は PATH に CLI がないと拡張同梱版へ戻るため、拡張の導入だけでは CI と版が揃わない。Claude Code の編集後 hook も CLI がないと jarl の検査を省略する。版を更新するときはローカル CLI（Homebrew なら `brew unpin jarl && brew upgrade jarl && brew pin jarl`）と `.github/workflows/R-check.yaml` の `version`、本手順、`CLAUDE.md` の版表記を同時に更新する。
+`jarl --version` が `jarl 0.6.0` を返すことを確認する。別の版が出る場合は `command -v jarl` で実行ファイルを特定し、PATH の優先順位や既存のインストール（Homebrew と uv の二重導入など）を調整する。エディタも再起動し、その統合ターミナルで同じ版を確認する。`jarl.executableStrategy: environment` は PATH に CLI がないと拡張同梱版へ戻るため、拡張の導入だけでは CI と版が揃わない。Claude Code の編集後 hook も CLI がないと jarl の検査を省略する。
+
+版を更新するときは、次の順で進める。
+
+1. リリースノートで追加・変更されたルールを確認し、ローカル CLI を入れ替える前に新しい版を試す。uv があれば、入っている CLI に触れずに実行できる: `uvx --from 'jarl-linter==<new version>' jarl check .`。新しく出た指摘は直すか、`jarl.toml` で除外する
+2. ローカル CLI を更新する（Homebrew なら `brew unpin jarl && brew upgrade jarl && brew pin jarl`、uv なら `uv tool install 'jarl-linter==<new version>'`）。Homebrew は最新版しか入れられないので、上げ先の版は Homebrew が提供している版になる
+3. 同じ作業のうちに `.github/workflows/R-check.yaml` の `version`、本手順、`SETUP.md`、`CLAUDE.md` の版表記を更新する。2 と 3 の間を空けると、その間はローカルと CI の指摘内容が食い違う
+
+ローカル CLI はマシン全体で共有される。同じマシンで本テンプレートから生成した他のプロジェクトも CI で jarl の版を固定しているので、ローカルを上げたらそれらの `R-check.yaml` の `version` も揃え、各プロジェクトで 1 の確認を行う（`grep -rn 'setup-jarl' --include='*.yaml' <projects-dir>/*/.github` で対象を洗い出せる）。
 
 ## セットアップ
 
