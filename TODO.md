@@ -95,13 +95,22 @@
 
 ## テンプレート保守メモ（テンプレート専用 — 生成先では本節ごと削除する）
 
-> ここから下はテンプレートリポジトリ自身の残作業。生成したプロジェクトには関係しないので、SETUP.md 手順 8 でこの節を削除する。規約そのものは `CLAUDE.md` に成文化済みで、ここに置くのは「下流へ配り終えたか」の台帳だけ。
+> ここから下はテンプレートリポジトリ自身の残作業。生成したプロジェクトには関係しないので、SETUP.md 手順 8 でこの節を削除する。規約そのものは `AGENTS.md` に成文化済みで、ここに置くのは「下流へ配り終えたか」の台帳だけ。
 
 ### Delegation Brief Rule の下流波及
 
 - **波及は任意**（2026-08-28 ユーザー判断）。生成済みプロジェクトは旧「Prompt Logging Rule」のままでも許容する。テンプレート側の切り替えは `81692ea` で完了している
-- 波及するときの作業単位: 対象 repo の `CLAUDE.md`「Prompt Logging Rule」節と `prompts/README.md` をテンプレート `81692ea` に合わせ、`.gitignore` に `prompts/*.md` と `!prompts/README.md` を足し、既に追跡済みのログを `git rm --cached` で外す（ローカルのファイルは残す）
+- 波及するときの作業単位: 対象 repo の `AGENTS.md`（旧 `CLAUDE.md`）「Prompt Logging Rule」節と `prompts/README.md` をテンプレート `81692ea` に合わせ、`.gitignore` に `prompts/*.md` と `!prompts/README.md` を足し、既に追跡済みのログを `git rm --cached` で外す（ローカルのファイルは残す）
 - 適用状況: `2607_tu_carsharing` が 2026-09-01 に採用済み（既存ログ 3 本も追跡解除）。他の生成先は未適用・未追跡
+
+### AGENTS.md 正典化と 32 KiB 上限の下流波及
+
+- テンプレート側は 2026-09-17 に切り替え済み（`CLAUDE.md` の中身を `AGENTS.md` へ移し、`CLAUDE.md` は `@AGENTS.md` の 1 行 + Claude 固有節。詳細は `AGENTS.md`「指示ファイルの構成」）
+- **今回のスコープ外 — 次回に回す**: Codex はプロジェクト指示ファイルを 32,768 バイトで警告なく打ち切る（`project_doc_max_bytes`）。`AGENTS.md` を持たず `project_doc_fallback_filenames = ["CLAUDE.md"]` で fallback している下流は、`CLAUDE.md` がこの上限を超えると末尾が静かに落ちる。2026-09-17 に `codex debug prompt-input` で実測した該当先:
+    - `2604_paddy-consolidation-did`（`CLAUDE.md` 44,961 B → 末尾 12,193 B が文の途中で欠落）
+    - `2602_symbol-visibility`（33,096 B → 328 B 欠落）
+- 確認方法: 対象 repo で `wc -c CLAUDE.md AGENTS.md`。Codex が実際に読んだ内容は `codex debug prompt-input` の `agents_md.instructions` ブロックで確認できる
+- 波及するときの作業単位: `tools/check-instructions-size.sh` と両 hook（`.githooks/pre-commit` / `.claude/settings.json`）を配り、超過分を `docs/` へ移す。正典を `AGENTS.md` に移すかどうかは repo ごとに判断してよいが、**上限の検査だけは fallback 運用の repo にも要る**
 
 ### ロケール層 2（`LC_TIME`）の下流波及
 
