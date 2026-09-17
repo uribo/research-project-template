@@ -41,6 +41,7 @@ R / tidyverse による研究分析プロジェクトのテンプレート。`ta
 ├── .vscode/           # ワークフロー設定のみ。意図的に git 追跡（理由は .gitignore のコメント）
 ├── README.md          # 概要・前提ツール・実行コマンド
 ├── TODO.md            # マイルストーン・Go/No-go ゲート・ブロッカー
+├── .template-version  # 生成元テンプレートの版（README の template バッジが参照）
 ├── _targets.R         # targets パイプライン定義
 ├── renv.lock          # renv::init/snapshot で生成（各環境で固定）
 ├── R/                 # 関数定義（tar_source() で自動読み込み、副作用なし）

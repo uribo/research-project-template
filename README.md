@@ -2,6 +2,7 @@
 
 [![R-check](https://github.com/{{GITHUB_REPO}}/actions/workflows/R-check.yaml/badge.svg)](https://github.com/{{GITHUB_REPO}}/actions/workflows/R-check.yaml)
 [![renv-update](https://github.com/{{GITHUB_REPO}}/actions/workflows/renv-update.yaml/badge.svg)](https://github.com/{{GITHUB_REPO}}/actions/workflows/renv-update.yaml)
+[![template {{TEMPLATE_VERSION}}](https://img.shields.io/badge/template-{{TEMPLATE_VERSION}}-lightgrey)](https://github.com/uribo/research-project-template/compare/{{TEMPLATE_VERSION}}...main)
 
 <!-- Optional static badges. Uncomment and fill in what applies; delete the rest.
      The Obsidian link is author-local (it resolves only on a machine with that
@@ -18,7 +19,13 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 - プロジェクト知識・規約: [AGENTS.md](AGENTS.md)（全エージェント共通の正典。`CLAUDE.md` は `@AGENTS.md` で取り込むだけ）
 - マイルストーン・Go/No-go ゲート: [TODO.md](TODO.md)
 
-> このリポジトリは [research-project-template](https://github.com/uribo/research-project-template) テンプレートから生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。
+> このリポジトリは [research-project-template](https://github.com/uribo/research-project-template) の `{{TEMPLATE_VERSION}}` から生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。
+
+生成元の版は [.template-version](.template-version)（1 行のテキストファイル）に記録してある。冒頭の `template` バッジはその値を表示し、**生成後にテンプレートへ入った変更の差分**（`compare/{{TEMPLATE_VERSION}}...main`）へリンクする。取り込みは任意で、必要な変更だけ手で反映する。反映したら記録した版を、取り込んだ先のタグへまとめて書き換える（README 内の版表記はバッジ・本文にまたがるため、個別に直さず一括置換する）:
+
+```bash
+sed -i '' 's/<旧タグ>/<新タグ>/g' .template-version README.md
+```
 
 ## 前提ツール
 

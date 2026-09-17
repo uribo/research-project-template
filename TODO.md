@@ -97,6 +97,21 @@
 
 > ここから下はテンプレートリポジトリ自身の残作業。生成したプロジェクトには関係しないので、SETUP.md 手順 8 でこの節を削除する。規約そのものは `AGENTS.md` に成文化済みで、ここに置くのは「下流へ配り終えたか」の台帳だけ。
 
+### 版タグと下流への追従（バッジの運用）
+
+- 下流に波及させたい変更が入ったら、テンプレートに `vYYYY.MM.DD` 形式のタグを打ち、Release Notes に「何が変わったか・どう当てるか」を書く。**適用手順は Release Notes 側に置き、この節に台帳を増やさない**
+- 生成先は `.template-version` に生成元のタグを持ち、README の `template` バッジがその値と `compare/<tag>...main` へのリンクを表示する（手順は `SETUP.md` 手順 2 と `README.md`）。取り込みは任意で、義務ではない
+- 手元の生成先の適用状況は一覧できる:
+
+```bash
+for d in ~/Documents/*/; do
+  [ -f "$d/.template-version" ] && printf '%s\t%s\n' "$(basename "$d")" "$(cat "$d/.template-version")"
+done
+```
+
+- **効くのは今後生成する分だけ。** 既存の生成先（Issue #12 の一覧）に入れるには `.template-version` を手で置く。テンプレート由来でない repo（`jmastats`・`jarticr` 等）には置かない
+- バッジは自分では赤くならない。「記録した版より新しいタグがある」を検知させるなら workflow を足して status badge にするが、現時点では作らない
+
 ### Delegation Brief Rule の下流波及
 
 - **波及は任意**（2026-08-28 ユーザー判断）。生成済みプロジェクトは旧「Prompt Logging Rule」のままでも許容する。テンプレート側の切り替えは `81692ea` で完了している

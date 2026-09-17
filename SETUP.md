@@ -37,8 +37,25 @@ git -C research-project-template archive HEAD | tar -x -C {{PROJECT_SLUG}}/
 | `{{GITHUB_REPO}}` | `owner/repo` |
 | `{{CONTACT_EMAIL}}` | 連絡先メール |
 | `{{DATE}}` | 作成日（JST、`TZ=Asia/Tokyo date '+%Y-%m-%d'`） |
+| `{{TEMPLATE_VERSION}}` | 生成元テンプレートの版タグ（下記のコマンドで取得） |
 
-置換対象ファイル: `AGENTS.md`, `README.md`, `TODO.md`, `Renviron.example`, `memory/*.md`, `notes/example-note.qmd`。
+置換対象ファイル: `AGENTS.md`, `README.md`, `TODO.md`, `Renviron.example`, `.template-version`, `memory/*.md`, `notes/example-note.qmd`。
+
+`{{TEMPLATE_VERSION}}` の値はテンプレート側で取得する。生成元をこの値で特定できるようにするため、**複製したのと同じ時点から取る**:
+
+```bash
+# 方法 A・B（手元の作業ツリーから複製した場合）
+git -C research-project-template describe --tags --exact-match
+# HEAD にタグが無ければ上は失敗する。その場合はコミットを記録する（compare リンクは SHA でも動く）
+git -C research-project-template rev-parse --short HEAD
+
+# 方法 C（"Use this template"。手元に作業ツリーが無い）
+gh api repos/uribo/research-project-template/commits/main --jq '.sha[0:7]'
+```
+
+`--abbrev=0`（直近のタグ）は使わない。テンプレートの HEAD がタグより先に進んでいると、実際に複製した内容より**古い版を記録**し、既に持っている変更が差分に出る。
+
+この値は `.template-version`（1 行のテキストファイル）と README 冒頭の `template` バッジに入り、バッジは「生成後にテンプレートへ入った変更」の差分へリンクする。取り込みは任意。運用は [README.md](README.md) を参照。
 
 `Renviron.example` は先頭ドットなしで同梱している。手順 5 の前に `cp Renviron.example .Renviron` でコピーし、実値を記入する（`.Renviron` は gitignore 済み）。
 
@@ -52,10 +69,10 @@ Claude Code と Codex の通常セッションでは `.Renviron` を自動ロー
 
 なお R は `./.Renviron` を *user* Renviron として扱うため、`R_ENVIRON_USER=/dev/null` は**プロジェクトの `.Renviron` も無効化する**。そのためエージェント設定側にも `LC_COLLATE=C` を置いてある（両ファイルの該当行を消さないこと）。
 
-置換後、残存がないか確認する（`SETUP.md` 自身はプレースホルダの説明を含むため除外。手順 8 で削除する）:
+置換後、残存がないか確認する（`SETUP.md` 自身はプレースホルダの説明を含むため除外。手順 8 で削除する）。`.template-version` は隠しファイルなので `--hidden` が要る（付けないと未置換のまま静かに通る）:
 
 ```bash
-rg '\{\{[A-Z_]+\}\}' --glob '!SETUP.md' || echo "no placeholders remaining"
+rg --hidden '\{\{[A-Z_]+\}\}' --glob '!SETUP.md' --glob '!.git' . || echo "no placeholders remaining"
 ```
 
 ## 3. プロジェクト固有の記入
