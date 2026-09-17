@@ -119,6 +119,18 @@ pull request create failed: GraphQL: GitHub Actions is not permitted to create o
 
 このとき push 自体は済んでいるため、**PR の無い `automation/renv-update` ブランチが残る**。設定を有効化したうえで `gh workflow run renv-update.yaml` を手動実行すれば PR が作られる。
 
+## エージェント指示ファイル
+
+規約の正典は [AGENTS.md](AGENTS.md) で、Codex はこれを直接、Claude Code は [CLAUDE.md](CLAUDE.md) 1 行目の `@AGENTS.md` import 経由で全文読む。常時は要らない詳細は [docs/](docs/) に置き、AGENTS.md にはポインタ 1 行を残す。
+
+**`AGENTS.md` は 32 KiB（32,768 バイト）を超えてはならない。** Codex はプロジェクト側の指示ファイルをこの上限で警告なく打ち切る（`project_doc_max_bytes`）ため、超過分はエラーも出さずにモデルへ届かなくなる。Claude Code 側は同じ内容を全文読むので、目視では気づけない。
+
+```bash
+sh tools/check-instructions-size.sh   # 32,768 で失敗、30,720 で警告
+```
+
+この検査は 2 層で自動化してある。ターミナルからのコミットは `.githooks/pre-commit`（`git config core.hooksPath .githooks` で有効化。同じ hook が `renv.lock` の変更にレビューを課す）、Claude Code 経由のコミットと `AGENTS.md` の編集は `.claude/settings.json` の hook が見る。
+
 ## ディレクトリ
 
 構成と各ディレクトリの役割は [AGENTS.md](AGENTS.md)「ディレクトリ構成」を参照。
