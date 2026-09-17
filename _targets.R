@@ -29,7 +29,7 @@ targets::tar_option_set(
   # backends (CmdStan etc.) join the same mechanism by including their
   # version in the pin target. Complements -- not replaces -- the
   # reproducibility sentinel tests and the post-lockfile-update rebuild
-  # discipline (CLAUDE.md).
+  # discipline (AGENTS.md).
   # Parallel execution with crew + mirai (uncomment when needed):
   # controller = crew::crew_controller_local(workers = 4)
 )

@@ -1,5 +1,7 @@
 #!/bin/sh
-# pre-commit: review gate for renv.lock changes.
+# pre-commit: two gates.
+#   1. AGENTS.md must stay under Codex's silent 32 KiB truncation limit.
+#   2. renv.lock changes get a review prompt (see below).
 #
 # With renv.config.auto.snapshot = TRUE (.Rprofile), renv.lock can change
 # without an explicit renv::snapshot(), so a lockfile change may ride along
@@ -16,7 +18,15 @@
 # Non-interactive contexts (no TTY: CI, some GUI clients) get the summary on
 # stderr and the commit proceeds — review is assumed to have happened there.
 
-# No-op unless renv.lock is part of this commit.
+# Gate 1: instruction-file size. Codex cuts the project doc at 32 KiB without
+# a warning, while Claude Code reads the same content in full, so an oversized
+# AGENTS.md breaks one tool silently. Hard failure, not a prompt: the fix is
+# always to move detail into docs/.
+if [ -f tools/check-instructions-size.sh ]; then
+  sh tools/check-instructions-size.sh --staged || exit 1
+fi
+
+# Gate 2: no-op unless renv.lock is part of this commit.
 git diff --cached --name-only -- renv.lock | grep -q . || exit 0
 
 echo "pre-commit: this commit includes renv.lock" >&2

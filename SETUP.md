@@ -38,11 +38,11 @@ git -C research-project-template archive HEAD | tar -x -C {{PROJECT_SLUG}}/
 | `{{CONTACT_EMAIL}}` | 連絡先メール |
 | `{{DATE}}` | 作成日（JST、`TZ=Asia/Tokyo date '+%Y-%m-%d'`） |
 
-置換対象ファイル: `CLAUDE.md`, `README.md`, `TODO.md`, `Renviron.example`, `memory/*.md`, `notes/example-note.qmd`。
+置換対象ファイル: `AGENTS.md`, `README.md`, `TODO.md`, `Renviron.example`, `memory/*.md`, `notes/example-note.qmd`。
 
 `Renviron.example` は先頭ドットなしで同梱している。手順 5 の前に `cp Renviron.example .Renviron` でコピーし、実値を記入する（`.Renviron` は gitignore 済み）。
 
-**このコピーは秘密情報が無くても必須**。`Renviron.example` は `LC_COLLATE=C` を含んでおり、これが照合順序固定の主たる層だから（`.Rprofile` の設定は起動時しか守れない。理由は `CLAUDE.md`「照合順序（`LC_COLLATE`）の固定」）。コピー後に確認する:
+**このコピーは秘密情報が無くても必須**。`Renviron.example` は `LC_COLLATE=C` を含んでおり、これが照合順序固定の主たる層だから（`.Rprofile` の設定は起動時しか守れない。理由は [docs/locale-pinning.md](docs/locale-pinning.md)）。コピー後に確認する:
 
 ```bash
 Rscript -e 'Sys.getlocale("LC_COLLATE")'   # "C" と出ること
@@ -61,8 +61,8 @@ rg '\{\{[A-Z_]+\}\}' --glob '!SETUP.md' || echo "no placeholders remaining"
 ## 3. プロジェクト固有の記入
 
 - `README.md`: 冒頭のコメントアウトされた静的バッジ雛形（助成・期間・Obsidian）から必要なものを有効化し、残りは削除する。Obsidian バッジは著者マシン固有の vault を指すため、共同研究者と共有するリポジトリでは有効化しない
-- `CLAUDE.md`: データソース表・コミット scope 表を記入。冒頭の注記 2 行（「テンプレート利用者へ」「テンプレート保守者へ」）を削除。不要なら Appendix（Author-local workflow）も削除
-- `AGENTS.md`: 「Handoff from Claude Code」節の冒頭にある `Template maintainers only` の注記を削除（生成先では HANDOFF を通常どおり更新する）
+- `AGENTS.md`: データソース表・コミット scope 表を記入。冒頭の注記 2 行（「テンプレート利用者へ」「テンプレート保守者へ」）と、「エージェント固有の規約 > Codex」にある `Template maintainers only` の注記を削除。不要なら Appendix（Author-local workflow）も削除
+- `CLAUDE.md`: 1 行目の `@AGENTS.md` は残す。Skills の一覧をプロジェクトで使うものに差し替える
 - `TODO.md`: Go/No-go ゲートの `Threshold` ほか固定欄、Phase 表を記入
 
 ## 4. renv の初期化
@@ -74,7 +74,7 @@ Rscript -e 'renv::init()'
 Rscript -e 'renv::snapshot()'
 ```
 
-依存マニフェスト（`DESCRIPTION`）は使わない。名前空間プレフィックス規約（`dplyr::filter()` 等）に従っていれば依存は自動検出される。詳細は `CLAUDE.md`「R パッケージ管理（renv）」を参照。
+依存マニフェスト（`DESCRIPTION`）は使わない。名前空間プレフィックス規約（`dplyr::filter()` 等）に従っていれば依存は自動検出される。詳細は `AGENTS.md`「R パッケージ管理（renv）」を参照。
 
 ## 5. バージョン管理の初期化
 
@@ -99,6 +99,12 @@ git config core.hooksPath .githooks
 - 一度だけ迂回する明示的な逃げ道: `git commit --no-verify`
 - TTY が無い環境（CI・一部 GUI クライアント）では差分表示のみで通過する（ハングさせない）
 - **二層構成**: Claude Code 経由のコミットは `.claude/settings.json` の PreToolUse hook が承認ダイアログで同じ差分レビューを課す。この git hook はターミナルからの人間のコミットを対象とする補完層
+
+同じ二層構成で、`AGENTS.md` が Codex の 32 KiB 上限（`project_doc_max_bytes`）を超えていないかも検査する（手動実行は `sh tools/check-instructions-size.sh`）。超過分は警告なく切り捨てられるため、hook で fail-loud にしてある。
+
+### 5.2 `.vscode/` の追跡方針
+
+作者のグローバル gitignore（`~/.config/git/ignore`）は `.vscode` を無視するが、本テンプレートでは例外として意図的に git 追跡する（`.gitignore` の `!.vscode/` で再包含）。テンプレートの目的が規約の伝播であり、内容がワークフロー設定（air/jarl/Quarto の formatOnSave・推奨拡張）に限られるため。テーマ・フォント等の個人的好みは置かない。
 
 ## 6. CI の有効化
 
@@ -141,7 +147,7 @@ git rm SETUP.md
 残すもの・書き換えるもの:
 
 - `R/data_provenance.R`（`verify_provenance()`）は汎用ヘルパー。**残す**。凍結データを使わないプロジェクトでは削除してよい
-- `R/input_guards.R` と `tests/testthat/test-input-guards.R` は汎用ヘルパーとその既知答えテスト。**残す**（example 依存なし）。入力の不在が空の結果に化けるのを止める層で、詳細は CLAUDE.md「『取れなかった』を『無かった』にしない」。外部取得をしないプロジェクトでは `new_fetch_result()` / `summarise_fetch_results()` だけ削除してもよいが、`require_input_dir()` / `list_input_files()` はディレクトリ読み込みがある限り有用
+- `R/input_guards.R` と `tests/testthat/test-input-guards.R` は汎用ヘルパーとその既知答えテスト。**残す**（example 依存なし）。入力の不在が空の結果に化けるのを止める層で、詳細は [docs/data-integrity.md](docs/data-integrity.md)。外部取得をしないプロジェクトでは `new_fetch_result()` / `summarise_fetch_results()` だけ削除してもよいが、`require_input_dir()` / `list_input_files()` はディレクトリ読み込みがある限り有用
 - `_dependencies.R` は **残す**。YAML からしか参照されないパッケージの唯一の宣言経路（現在は `notes/_metadata.yml` の `dev: ragg_png` に対する `ragg`）。`notes/` の図描画をやめて `dev` キーを外す場合のみ該当行を削除する。**このファイルを source しない・`R/` に移動しない**
 - `data-raw/PROVENANCE.md` は example 行を削除し、自分の生データの manifest を記入する
 - `TODO.md` は末尾の「テンプレート保守メモ」節を**丸ごと削除する**。テンプレート自身の配布台帳であり、生成先には無関係

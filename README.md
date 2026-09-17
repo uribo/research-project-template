@@ -15,8 +15,7 @@
 
 R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェクト。Claude Code / Codex との協働を前提とした構成。
 
-- プロジェクト知識・規約: [CLAUDE.md](CLAUDE.md)
-- Codex 固有の規約: [AGENTS.md](AGENTS.md)
+- プロジェクト知識・規約: [AGENTS.md](AGENTS.md)（全エージェント共通の正典。`CLAUDE.md` は `@AGENTS.md` で取り込むだけ）
 - マイルストーン・Go/No-go ゲート: [TODO.md](TODO.md)
 
 > このリポジトリは [research-project-template](https://github.com/uribo/research-project-template) テンプレートから生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。
@@ -62,7 +61,7 @@ jarl check .
 
 1. リリースノートで追加・変更されたルールを確認し、ローカル CLI を入れ替える前に新しい版を試す。uv があれば、入っている CLI に触れずに実行できる: `uvx --from 'jarl-linter==<new version>' jarl check .`。新しく出た指摘は直すか、`jarl.toml` で除外する
 2. ローカル CLI を更新する（Homebrew なら `brew unpin jarl && brew upgrade jarl && brew pin jarl`、uv なら `uv tool install 'jarl-linter==<new version>'`）。Homebrew は最新版しか入れられないので、上げ先の版は Homebrew が提供している版になる
-3. 同じ作業のうちに `.github/workflows/R-check.yaml` の `version`、本手順、`SETUP.md`、`CLAUDE.md` の版表記を更新する。2 と 3 の間を空けると、その間はローカルと CI の指摘内容が食い違う
+3. 同じ作業のうちに `.github/workflows/R-check.yaml` の `version`、本手順、`SETUP.md`、`AGENTS.md` の版表記を更新する。2 と 3 の間を空けると、その間はローカルと CI の指摘内容が食い違う
 
 ローカル CLI はマシン全体で共有される。同じマシンで本テンプレートから生成した他のプロジェクトも CI で jarl の版を固定しているので、ローカルを上げたらそれらの `R-check.yaml` の `version` も揃え、各プロジェクトで 1 の確認を行う（`grep -rn 'setup-jarl' --include='*.yaml' <projects-dir>/*/.github` で対象を洗い出せる）。
 
@@ -120,6 +119,18 @@ pull request create failed: GraphQL: GitHub Actions is not permitted to create o
 
 このとき push 自体は済んでいるため、**PR の無い `automation/renv-update` ブランチが残る**。設定を有効化したうえで `gh workflow run renv-update.yaml` を手動実行すれば PR が作られる。
 
+## エージェント指示ファイル
+
+規約の正典は [AGENTS.md](AGENTS.md) で、Codex はこれを直接、Claude Code は [CLAUDE.md](CLAUDE.md) 1 行目の `@AGENTS.md` import 経由で全文読む。常時は要らない詳細は [docs/](docs/) に置き、AGENTS.md にはポインタ 1 行を残す。
+
+**`AGENTS.md` は 32 KiB（32,768 バイト）を超えてはならない。** Codex はプロジェクト側の指示ファイルをこの上限で警告なく打ち切る（`project_doc_max_bytes`）ため、超過分はエラーも出さずにモデルへ届かなくなる。Claude Code 側は同じ内容を全文読むので、目視では気づけない。
+
+```bash
+sh tools/check-instructions-size.sh   # 32,768 で失敗、30,720 で警告
+```
+
+この検査は 2 層で自動化してある。ターミナルからのコミットは `.githooks/pre-commit`（`git config core.hooksPath .githooks` で有効化。同じ hook が `renv.lock` の変更にレビューを課す）、Claude Code 経由のコミットと `AGENTS.md` の編集は `.claude/settings.json` の hook が見る。
+
 ## ディレクトリ
 
-構成と各ディレクトリの役割は [CLAUDE.md](CLAUDE.md)「ディレクトリ構成」を参照。
+構成と各ディレクトリの役割は [AGENTS.md](AGENTS.md)「ディレクトリ構成」を参照。
