@@ -42,6 +42,8 @@ renv/staging/
 _targets/
 
 # --- Quarto artefacts (regenerate from .qmd) ---
+/README.html
+/README_files/
 notes/*.html
 notes/*_files/
 notes/*.knit.md
