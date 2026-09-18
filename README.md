@@ -21,10 +21,12 @@ R / tidyverse + `targets` + `renv` + Quarto による研究分析プロジェク
 
 > このリポジトリは [research-project-template](https://github.com/uribo/research-project-template) の `{{TEMPLATE_VERSION}}` から生成された。初回セットアップが未了の場合は [SETUP.md](SETUP.md) を参照。
 
-生成元の版は [.template-version](.template-version)（1 行のテキストファイル）に記録してある。冒頭の `template` バッジはその値を表示し、**生成後にテンプレートへ入った変更の差分**（`compare/{{TEMPLATE_VERSION}}...main`）へリンクする。取り込みは任意で、必要な変更だけ手で反映する。反映したら記録した版を、取り込んだ先のタグへまとめて書き換える（README 内の版表記はバッジ・本文にまたがるため、個別に直さず一括置換する）:
+生成元の版は [.template-version](.template-version)（1 行のテキストファイル）に記録してある。冒頭の `template` バッジはその値を表示し、**生成後にテンプレートへ入った変更の差分**（`compare/{{TEMPLATE_VERSION}}...main`）へリンクする。取り込みは任意で、必要な変更だけ手で反映する。
+
+記録した版を進めるのは、**そのタグまでの変更をすべて反映したか、見送ると決めたときだけ**にする。一部だけ取り込んで版を進めると、まだ判断していない変更が以後の差分から消える。進めるときは、README 内の版表記がバッジ・本文にまたがるので一括置換する（`perl -pi` は macOS と Linux で同じ書き方で動く。`sed -i` は両者で引数が異なる）:
 
 ```bash
-sed -i '' 's/<旧タグ>/<新タグ>/g' .template-version README.md
+perl -pi -e 's/\Q<旧タグ>\E/<新タグ>/g' .template-version README.md
 ```
 
 ## 前提ツール

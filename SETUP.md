@@ -14,6 +14,9 @@ jarl は同節の手順で CLI を別途導入し、`jarl --version` が CI と�
 
 ```bash
 # 方法 A: rsync（推奨。.git と生成物を除外）
+# rsync は未コミットの変更も複製する。先に出力が空であることを確認する
+# （変更があると、手順 2 で記録する版と複製した中身が食い違う）
+git -C research-project-template status --porcelain
 rsync -a \
   --exclude='.git' --exclude='renv' --exclude='renv.lock' \
   --exclude='_targets' --exclude='.quarto' \
@@ -45,13 +48,15 @@ git -C research-project-template archive HEAD | tar -x -C {{PROJECT_SLUG}}/
 
 ```bash
 # 方法 A・B（手元の作業ツリーから複製した場合）
-git -C research-project-template describe --tags --exact-match
-# HEAD にタグが無ければ上は失敗する。その場合はコミットを記録する（compare リンクは SHA でも動く）
-git -C research-project-template rev-parse --short HEAD
+# HEAD にタグがあればタグを、無ければコミットを 1 行だけ出す（compare リンクは SHA でも動く）
+git -C research-project-template describe --tags --exact-match 2>/dev/null \
+  || git -C research-project-template rev-parse --short HEAD
 
 # 方法 C（"Use this template"。手元に作業ツリーが無い）
 gh api repos/uribo/research-project-template/commits/main --jq '.sha[0:7]'
 ```
+
+方法 C の値は生成した時点ではなく**実行した時点**の `main` を指すので、厳密ではない。生成の直後に実行し、その間にテンプレートへ push が無かったことを確かめる（`gh api repos/uribo/research-project-template/commits/main --jq '.commit.committer.date'` が生成時刻より前なら一致している）。版を厳密に残したいときは方法 A・B を使う。
 
 `--abbrev=0`（直近のタグ）は使わない。テンプレートの HEAD がタグより先に進んでいると、実際に複製した内容より**古い版を記録**し、既に持っている変更が差分に出る。
 
