@@ -101,15 +101,15 @@
 
 - 下流に波及させたい変更が入ったら、テンプレートに `vYYYY.MM.DD` 形式のタグを打ち、Release Notes に「何が変わったか・どう当てるか」を書く。**適用手順は Release Notes 側に置き、この節に台帳を増やさない**
 - 生成先は `.template-version` に生成元のタグを持ち、README の `template` バッジがその値と `compare/<tag>...main` へのリンクを表示する（手順は `SETUP.md` 手順 2 と `README.md`）。取り込みは任意で、義務ではない
-- 手元の生成先の適用状況は一覧できる:
+- 手元の生成先の適用状況は一覧できる（repo は `~/Documents/<PARA>/<repo>` の 2 階層目にある。`grep` はテンプレート自身の未置換行を除く）:
 
 ```bash
-for d in ~/Documents/*/; do
+for d in ~/Documents/*/*/; do
   [ -f "$d/.template-version" ] && printf '%s\t%s\n' "$(basename "$d")" "$(cat "$d/.template-version")"
-done
+done | grep -v '{{'
 ```
 
-- **効くのは今後生成する分だけ。** 既存の生成先（Issue #12 の一覧）に入れるには `.template-version` を手で置く。テンプレート由来でない repo（`jmastats`・`jarticr` 等）には置かない
+- **効くのは今後生成する分だけ。** 既存の生成先への適用状況・作業単位・値の決め方は **Issue #15 が台帳**（このファイルには写さない）。新しく生成したら #15 の表に行を足す
 - バッジは自分では赤くならない。「記録した版より新しいタグがある」を検知させるなら workflow を足して status badge にするが、現時点では作らない
 
 ### Delegation Brief Rule の下流波及
