@@ -44,6 +44,9 @@ _targets/
 # --- Quarto artefacts (regenerate from .qmd) ---
 /README.html
 /README_files/
+draft/*_files/
+draft/*.knit.md
+draft/*.rmarkdown
 notes/*.html
 notes/*_files/
 notes/*.knit.md
