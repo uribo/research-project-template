@@ -47,8 +47,11 @@ _targets/
 notes/*.html
 notes/*_files/
 notes/*.knit.md
+notes/*.rmarkdown
 paper/*.html
 paper/*_files/
+paper/*.knit.md
+paper/*.rmarkdown
 .quarto/
 **/*.quarto_ipynb
 
