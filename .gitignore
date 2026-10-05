@@ -44,11 +44,17 @@ _targets/
 # --- Quarto artefacts (regenerate from .qmd) ---
 /README.html
 /README_files/
+draft/*_files/
+draft/*.knit.md
+draft/*.rmarkdown
 notes/*.html
 notes/*_files/
 notes/*.knit.md
+notes/*.rmarkdown
 paper/*.html
 paper/*_files/
+paper/*.knit.md
+paper/*.rmarkdown
 .quarto/
 **/*.quarto_ipynb
 
