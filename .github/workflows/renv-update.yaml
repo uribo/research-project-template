@@ -165,15 +165,24 @@ jobs:
           # those, so without this every unchanged record has its Repository
           # rewritten to the P3M URL (137 of 152 and 147 of 167 records in two
           # generated projects, 2026-09 and 2026-10). Records of updated
-          # packages keep what the installer stamped. Drop pak, which this job
-          # installs as tooling, unless the project already records it. See
-          # issue #17.
+          # packages keep what the installer stamped. Only repository records
+          # qualify: renv::update() also moves Git remotes to a new RemoteSha
+          # at an unchanged Version, and restoring those would pin the old
+          # commit while the library holds the new one. Drop pak, which this
+          # job installs as tooling, unless the project already records it.
+          # See issue #17.
           base <- renv::lockfile_read(Sys.getenv("RENV_LOCK_BASE"))
           lock <- renv::lockfile_read("renv.lock")
           same <- intersect(names(lock$Packages), names(base$Packages))
           same <- same[vapply(
             same,
-            function(p) identical(lock$Packages[[p]]$Version, base$Packages[[p]]$Version),
+            function(p) {
+              old <- base$Packages[[p]]
+              new <- lock$Packages[[p]]
+              identical(old$Source, "Repository") &&
+                identical(new$Source, "Repository") &&
+                identical(new$Version, old$Version)
+            },
             logical(1)
           )]
           lock$Packages[same] <- base$Packages[same]
