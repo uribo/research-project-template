@@ -152,7 +152,11 @@ jobs:
             renv.config.pak.enabled = FALSE,
             repos = c(CRAN = "https://packagemanager.posit.co/cran/latest")
           )
-          renv::update(prompt = FALSE)
+          # Leave renv itself alone. A PR that bumps renv cannot be taken in
+          # with restore(), which skips renv, so collaborators stay on the
+          # old version with status() out of sync and activate.R rewritten.
+          # Upgrade renv deliberately with renv::upgrade(). See issue #17.
+          renv::update(prompt = FALSE, exclude = "renv")
           # The lockfile records options(repos) at snapshot time, so switch
           # back to CRAN before writing it. snapshot also reflects the
           # downstream project's configured snapshot.type, so PR reviewers
@@ -168,19 +172,25 @@ jobs:
           # packages keep what the installer stamped. Only repository records
           # qualify: renv::update() also moves Git remotes to a new RemoteSha
           # at an unchanged Version, and restoring those would pin the old
-          # commit while the library holds the new one. Drop pak, which this
-          # job installs as tooling, unless the project already records it.
-          # See issue #17.
+          # commit while the library holds the new one. Pre-1.0 lockfiles
+          # name the repository source "CRAN", "RSPM", "P3M" or "PPM", which
+          # renv treats as "Repository". Drop pak, which this job installs as
+          # tooling, unless the project already records it. See issue #17.
           base <- renv::lockfile_read(Sys.getenv("RENV_LOCK_BASE"))
           lock <- renv::lockfile_read("renv.lock")
+          is_repository <- function(record) {
+            source <- record$Source
+            !is.null(source) &&
+              tolower(source) %in% c("repository", "cran", "rspm", "p3m", "ppm")
+          }
           same <- intersect(names(lock$Packages), names(base$Packages))
           same <- same[vapply(
             same,
             function(p) {
               old <- base$Packages[[p]]
               new <- lock$Packages[[p]]
-              identical(old$Source, "Repository") &&
-                identical(new$Source, "Repository") &&
+              is_repository(old) &&
+                is_repository(new) &&
                 identical(new$Version, old$Version)
             },
             logical(1)
@@ -215,16 +225,25 @@ jobs:
       - name: Summarize package changes
         if: steps.update.outputs.has_changes == 'true'
         run: |
-          old=$(git show HEAD:renv.lock 2>/dev/null | jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' | sort)
-          new=$(jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' renv.lock | sort)
+          # Show the commit of Git-sourced records too: renv::update() moves
+          # them to a new RemoteSha without a version bump.
+          records='.Packages | to_entries[] | "\(.key) \(.value.Version)\(if .value.RemoteSha then " @ " + .value.RemoteSha[0:7] else "" end)"'
+          old=$(git show HEAD:renv.lock 2>/dev/null | jq -r "$records" | sort)
+          new=$(jq -r "$records" renv.lock | sort)
+          # Test the diff for emptiness explicitly: without pipefail the
+          # pipeline returns sed's status, so an `|| echo` fallback never runs.
+          changes=$(diff <(printf '%s\n' "$old") <(printf '%s\n' "$new") \
+            | grep '^[<>]' \
+            | sed 's/^< /- /; s/^> /+ /' || true)
           {
             echo "Automated renv package update."
             echo
             echo "Package-level changes:"
-            diff <(printf '%s\n' "$old") <(printf '%s\n' "$new") \
-              | grep '^[<>]' \
-              | sed 's/^< /- /; s/^> /+ /' \
-              || echo "(metadata-only lockfile change)"
+            if [ -n "$changes" ]; then
+              printf '%s\n' "$changes"
+            else
+              echo "(metadata-only lockfile change)"
+            fi
             echo
             echo "Note: renv::snapshot() uses this project's snapshot.type."
             echo "Review package removals as well as version updates."
