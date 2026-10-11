@@ -156,7 +156,20 @@ jobs:
           # with restore(), which skips renv, so collaborators stay on the
           # old version with status() out of sync and activate.R rewritten.
           # Upgrade renv deliberately with renv::upgrade(). See issue #17.
-          renv::update(prompt = FALSE, exclude = "renv")
+          #
+          # Without `all`, renv's installer only looks at the project
+          # library. restore leaves recommended packages such as Matrix and
+          # lattice in the system library when it already holds the recorded
+          # version, so they were never updated (uribo/renv-update-smoke,
+          # 2026-10). `all = TRUE` checks every library path and `packages`
+          # keeps that to what the lockfile records; updates still install
+          # into the project library.
+          renv::update(
+            packages = names(renv::lockfile_read(Sys.getenv("RENV_LOCK_BASE"))$Packages),
+            exclude = "renv",
+            all = TRUE,
+            prompt = FALSE
+          )
           # The lockfile records options(repos) at snapshot time, so switch
           # back to CRAN before writing it. snapshot also reflects the
           # downstream project's configured snapshot.type, so PR reviewers
@@ -232,9 +245,12 @@ jobs:
           new=$(jq -r "$records" renv.lock | sort)
           # Test the diff for emptiness explicitly: without pipefail the
           # pipeline returns sed's status, so an `|| echo` fallback never runs.
+          # The stable sort on the package name puts each package's - and +
+          # lines next to each other; diff groups them by hunk instead.
           changes=$(diff <(printf '%s\n' "$old") <(printf '%s\n' "$new") \
             | grep '^[<>]' \
-            | sed 's/^< /- /; s/^> /+ /' || true)
+            | sed 's/^< /- /; s/^> /+ /' \
+            | sort -s -k2,2 || true)
           {
             echo "Automated renv package update."
             echo
