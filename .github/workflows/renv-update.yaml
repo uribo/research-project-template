@@ -183,9 +183,12 @@ jobs:
           # rewritten to the P3M URL (137 of 152 and 147 of 167 records in two
           # generated projects, 2026-09 and 2026-10). Records of updated
           # packages keep what the installer stamped. Only repository records
-          # qualify: renv::update() also moves Git remotes to a new RemoteSha
-          # at an unchanged Version, and restoring those would pin the old
-          # commit while the library holds the new one. Pre-1.0 lockfiles
+          # qualify: a Git remote can reach a new RemoteSha at an unchanged
+          # Version, and restoring its record would pin the old commit while
+          # the library holds the new one. With pak enabled, restore itself
+          # installs the default branch head of a remote whose record carries
+          # RemotePkgRef without a ref (uribo/renv-update-smoke, 2026-10);
+          # renv::update() can move it as well. Pre-1.0 lockfiles
           # name the repository source "CRAN", "RSPM", "P3M" or "PPM", which
           # renv treats as "Repository". Drop pak, which this job installs as
           # tooling, unless the project already records it. See issue #17.
@@ -238,8 +241,8 @@ jobs:
       - name: Summarize package changes
         if: steps.update.outputs.has_changes == 'true'
         run: |
-          # Show the commit of Git-sourced records too: renv::update() moves
-          # them to a new RemoteSha without a version bump.
+          # Show the commit of Git-sourced records too: restore or update can
+          # move them to a new RemoteSha without a version bump.
           records='.Packages | to_entries[] | "\(.key) \(.value.Version)\(if .value.RemoteSha then " @ " + .value.RemoteSha[0:7] else "" end)"'
           old=$(git show HEAD:renv.lock 2>/dev/null | jq -r "$records" | sort)
           new=$(jq -r "$records" renv.lock | sort)
