@@ -147,7 +147,9 @@ jobs:
           # this distribution, so the updates install as binaries instead of
           # compiling from source within the job timeout; other hosts such as
           # p3m.dev are rewritten only after a status API round trip. restore
-          # above keeps its current setup.
+          # above keeps its current setup. This needs renv >= 1.2.4: 1.2.0 to
+          # 1.2.3 resolve the update against the URL as set here, so P3M
+          # serves source tarballs and every update compiles (issue #21).
           options(
             renv.config.pak.enabled = FALSE,
             repos = c(CRAN = "https://packagemanager.posit.co/cran/latest")
