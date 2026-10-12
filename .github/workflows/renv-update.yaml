@@ -130,7 +130,16 @@ jobs:
           # lockfile (measured in uribo/renv-update-smoke, 2026-09-05).
           Sys.unsetenv("RENV_CONFIG_REPOS_OVERRIDE")
           options(repos = c(CRAN = "https://cloud.r-project.org"))
-          renv::restore(prompt = FALSE)
+          # Name the repository for restore explicitly. Without the override,
+          # restore reads the repositories from the lockfile header, and this
+          # job writes cloud CRAN there, so once its PR is merged every later
+          # restore would fetch source tarballs and compile the whole library
+          # past the job timeout (issue #23). renv rewrites this P3M URL to the
+          # Linux binary endpoint; the lockfile itself is left untouched.
+          renv::restore(
+            repos = c(CRAN = "https://packagemanager.posit.co/cran/latest"),
+            prompt = FALSE
+          )
           # Update through renv's own installer, not pak. With pak enabled,
           # renv::update() hands every installed package to one
           # pak::pkg_install(upgrade = TRUE) call, so a single package that
