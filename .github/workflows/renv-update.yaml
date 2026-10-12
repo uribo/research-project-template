@@ -100,18 +100,27 @@ jobs:
       - name: Install renv tooling
         if: steps.lockfile.outputs.has_lockfile == 'true'
         run: |
+          RENV_LOCK_VERSION=$(jq -r '.Packages.renv.Version' renv.lock)
+          export RENV_LOCK_VERSION
           Rscript - <<'RSCRIPT'
           utils::install.packages("pak", repos = sprintf(
             "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
             .Platform$pkgType, R.version$os, R.version$arch
           ))
-          pak::pkg_install("renv")
+          # Install the renv version the lockfile pins, not CRAN's latest. The
+          # later steps load renv from the project library, so a bare "renv"
+          # here ran restore, update and snapshot under a newer renv than the
+          # project uses (1.3.1 against a pinned 1.2.4 in 2026-10).
+          pak::pkg_install(sprintf("renv@%s", Sys.getenv("RENV_LOCK_VERSION")))
           RSCRIPT
 
       - name: Update renv.lock
         id: update
         if: steps.lockfile.outputs.has_lockfile == 'true'
         run: |
+          RENV_LOCK_BASE="$RUNNER_TEMP/renv.lock.base"
+          git show HEAD:renv.lock > "$RENV_LOCK_BASE"
+          export RENV_LOCK_BASE
           Rscript - <<'RSCRIPT'
           # Keep the repository URL the lockfile records pointing at CRAN
           # rather than the moving "latest" Posit Package Manager snapshot the
@@ -119,24 +128,92 @@ jobs:
           # sets RENV_CONFIG_REPOS_OVERRIDE, which renv honours ahead of
           # options(repos), so pinning options alone leaves the PPM URL in the
           # lockfile (measured in uribo/renv-update-smoke, 2026-09-05).
-          #
-          # This fixes the recorded URL only. Each package's Repository field
-          # is stamped by whatever installed it, and pak fetches P3M Linux
-          # binaries whatever options(repos) and use-public-rspm say, so
-          # packages this job updates carry a P3M value. Those stamps are
-          # sticky: renv keeps the record of a package whose version did not
-          # change. Do not add a step to rewrite them; restore does not depend
-          # on the field.
           Sys.unsetenv("RENV_CONFIG_REPOS_OVERRIDE")
           options(repos = c(CRAN = "https://cloud.r-project.org"))
           renv::restore(prompt = FALSE)
-          renv::update(prompt = FALSE, lock = TRUE)
-          # Make the lockfile write explicit. With pak enabled, update(lock =
-          # TRUE) can update the project library without leaving a lockfile
-          # diff; snapshot also reflects the downstream project's configured
-          # snapshot.type, so PR reviewers should check removals as well as
-          # version bumps.
+          # Update through renv's own installer, not pak. With pak enabled,
+          # renv::update() hands every installed package to one
+          # pak::pkg_install(upgrade = TRUE) call, so a single package that
+          # has left CRAN fails the whole solve and every package reports
+          # "dependency conflict" (polite 0.1.4 left the index in 2026-09 and
+          # broke a generated project's weekly update for five weeks); renv
+          # 1.2.4 also drops `exclude` on that path. renv's installer skips
+          # packages missing from the repository instead. The consequence is
+          # that future archivals pass silently: an archived package stays at
+          # its recorded version. See issue #17.
+          #
+          # Point the installer at P3M for the update only. renv rewrites its
+          # default P3M URL (config ppm.url) to the Linux binary endpoint for
+          # this distribution, so the updates install as binaries instead of
+          # compiling from source within the job timeout; other hosts such as
+          # p3m.dev are rewritten only after a status API round trip. restore
+          # above keeps its current setup.
+          options(
+            renv.config.pak.enabled = FALSE,
+            repos = c(CRAN = "https://packagemanager.posit.co/cran/latest")
+          )
+          # Leave renv itself alone. A PR that bumps renv cannot be taken in
+          # with restore(), which skips renv, so collaborators stay on the
+          # old version with status() out of sync and activate.R rewritten.
+          # Upgrade renv deliberately with renv::upgrade(). See issue #17.
+          #
+          # Without `all`, renv's installer only looks at the project
+          # library. restore leaves recommended packages such as Matrix and
+          # lattice in the system library when it already holds the recorded
+          # version, so they were never updated (uribo/renv-update-smoke,
+          # 2026-10). `all = TRUE` checks every library path and `packages`
+          # keeps that to what the lockfile records; updates still install
+          # into the project library.
+          renv::update(
+            packages = names(renv::lockfile_read(Sys.getenv("RENV_LOCK_BASE"))$Packages),
+            exclude = "renv",
+            all = TRUE,
+            prompt = FALSE
+          )
+          # The lockfile records options(repos) at snapshot time, so switch
+          # back to CRAN before writing it. snapshot also reflects the
+          # downstream project's configured snapshot.type, so PR reviewers
+          # should check removals as well as version bumps.
+          options(repos = c(CRAN = "https://cloud.r-project.org"))
           renv::snapshot(prompt = FALSE)
+          # Put back the committed record of every package whose version did
+          # not change. restore installs every package as a P3M Linux binary,
+          # whose DESCRIPTION carries P3M source fields, and snapshot reads
+          # those, so without this every unchanged record has its Repository
+          # rewritten to the P3M URL (137 of 152 and 147 of 167 records in two
+          # generated projects, 2026-09 and 2026-10). Records of updated
+          # packages keep what the installer stamped. Only repository records
+          # qualify: a Git remote can reach a new RemoteSha at an unchanged
+          # Version, and restoring its record would pin the old commit while
+          # the library holds the new one. With pak enabled, restore itself
+          # installs the default branch head of a remote whose record carries
+          # RemotePkgRef without a ref (uribo/renv-update-smoke, 2026-10);
+          # renv::update() can move it as well. Pre-1.0 lockfiles
+          # name the repository source "CRAN", "RSPM", "P3M" or "PPM", which
+          # renv treats as "Repository". Drop pak, which this job installs as
+          # tooling, unless the project already records it. See issue #17.
+          base <- renv::lockfile_read(Sys.getenv("RENV_LOCK_BASE"))
+          lock <- renv::lockfile_read("renv.lock")
+          is_repository <- function(record) {
+            source <- record$Source
+            !is.null(source) &&
+              tolower(source) %in% c("repository", "cran", "rspm", "p3m", "ppm")
+          }
+          same <- intersect(names(lock$Packages), names(base$Packages))
+          same <- same[vapply(
+            same,
+            function(p) {
+              old <- base$Packages[[p]]
+              new <- lock$Packages[[p]]
+              is_repository(old) &&
+                is_repository(new) &&
+                identical(new$Version, old$Version)
+            },
+            logical(1)
+          )]
+          lock$Packages[same] <- base$Packages[same]
+          if (!"pak" %in% names(base$Packages)) lock$Packages$pak <- NULL
+          renv::lockfile_write(lock, "renv.lock")
           RSCRIPT
 
           if git diff --quiet -- renv.lock renv/activate.R; then
@@ -164,16 +241,28 @@ jobs:
       - name: Summarize package changes
         if: steps.update.outputs.has_changes == 'true'
         run: |
-          old=$(git show HEAD:renv.lock 2>/dev/null | jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' | sort)
-          new=$(jq -r '.Packages | to_entries[] | "\(.key) \(.value.Version)"' renv.lock | sort)
+          # Show the commit of Git-sourced records too: restore or update can
+          # move them to a new RemoteSha without a version bump.
+          records='.Packages | to_entries[] | "\(.key) \(.value.Version)\(if .value.RemoteSha then " @ " + .value.RemoteSha[0:7] else "" end)"'
+          old=$(git show HEAD:renv.lock 2>/dev/null | jq -r "$records" | sort)
+          new=$(jq -r "$records" renv.lock | sort)
+          # Test the diff for emptiness explicitly: without pipefail the
+          # pipeline returns sed's status, so an `|| echo` fallback never runs.
+          # The stable sort on the package name puts each package's - and +
+          # lines next to each other; diff groups them by hunk instead.
+          changes=$(diff <(printf '%s\n' "$old") <(printf '%s\n' "$new") \
+            | grep '^[<>]' \
+            | sed 's/^< /- /; s/^> /+ /' \
+            | sort -s -k2,2 || true)
           {
             echo "Automated renv package update."
             echo
             echo "Package-level changes:"
-            diff <(printf '%s\n' "$old") <(printf '%s\n' "$new") \
-              | grep '^[<>]' \
-              | sed 's/^< /- /; s/^> /+ /' \
-              || echo "(metadata-only lockfile change)"
+            if [ -n "$changes" ]; then
+              printf '%s\n' "$changes"
+            else
+              echo "(metadata-only lockfile change)"
+            fi
             echo
             echo "Note: renv::snapshot() uses this project's snapshot.type."
             echo "Review package removals as well as version updates."
