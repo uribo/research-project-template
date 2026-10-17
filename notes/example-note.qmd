@@ -53,12 +53,7 @@ dependency resolution all keep working.
 
 ## Brand colors
 
-`notes/_brand.yml` sets the colors in both light and dark mode. Links and the
-table of contents take them directly; the callouts below take them through
-`notes/callouts.scss`. Figures are drawn by R, so the pipeline builds each one
-twice with `note_figure_pair()` (`R/plot_theme.R`) and the chunk prints both
-under `renderings: [light, dark]`, so each mode shows its own version. Use this section to check the colors after editing
-`_brand.yml`, then delete it.
+`notes/_brand.yml` sets the colors in both light and dark mode. Links and the table of contents take them directly; the callouts below take them through `notes/callouts.scss`. Figures are drawn by R, so the pipeline builds each one twice with `note_figure_pair()` (`R/plot_theme.R`) and the chunk prints both under `renderings: [light, dark]`, so each mode shows its own version. Use this section to check the colors after editing `_brand.yml`, then delete it.
 
 ::: {.callout-note}
 Note callout.
