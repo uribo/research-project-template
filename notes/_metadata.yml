@@ -14,6 +14,8 @@ format:
     respect-user-color-scheme: true
     # 色は _brand.yml（明暗別）。callout の色は callouts.scss で _brand.yml の色へ向ける
     # （Quarto は callout を Bootstrap の $red 等で塗り、_brand.yml のパレット名は届かない）
+    # ノート側で theme を上書きするときは light/dark の両方に callouts.scss と
+    # brand を残す（スカラー 1 つで上書きすると明暗の分割ごと消える）
     theme:
       light: [callouts.scss, brand]
       dark: [callouts.scss, brand]

@@ -198,7 +198,7 @@ sentinel の限界（fixture の drift 検出であって完全再現の保証�
 - 原稿ドラフト: `paper/`（`.qmd`）
 - 数値の引用は `tar_read()` / `tar_load()` 経由で動的に解決する（下記 Data Reference Policy）
 - レンダーは Quarto CLI を前提とする。`notes/` の QMD は `tarchetypes::tar_quarto()` で組み込めるが、**CLI 未導入環境では当該ターゲットが DAG から外れる**（`_targets.R` が除外数とパスを `message()` で報告する。黙って外れると `tar_validate()` の緑が本番より狭い範囲しか意味しない）。CI は CLI を導入するのでこの分岐はローカル限定
-- `notes/` の QMD を単体レンダーすると作業ディレクトリが `notes/` になり `tar_load()` が `notes/_targets/` を探して失敗する。`notes/_targets.yaml`（`store: ../_targets/`）でルートのストアに向けてあるので、setup チャンクは `store` 引数なしで書ける
+- `notes/` の QMD を単体レンダーすると作業ディレクトリが `notes/` になり `tar_load()` が `notes/_targets/` を探して失敗する。`notes/_targets.yaml`（`store: ../_targets/`）でルートのストアに向けてあるので、setup チャンクは `store` 引数なしで書ける。逆に `tar_quarto()` 経由の描画では作業ディレクトリが**プロジェクトルート**になる（`working_directory` 未指定時）。ノートから `source("../R/...")` などの相対パスを使わず、計算と図は target にして `tar_load()` で読む
 - ノート間リンクは **ソースでは `.qmd`** で書く。`notes/qmd-links-to-html.lua`（`notes/_metadata.yml` の `filters:` に登録済み）が HTML レンダー時のみ `.html` へ書き換える（#anchor 保持・外部 URL は不変）
 
 ### Data Reference Policy

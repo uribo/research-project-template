@@ -58,6 +58,11 @@ core_targets <- list(
     example_summary,
     summarise_example(example_data),
     description = "種ごとの観測数・平均値の集計"
+  ),
+  tar_target(
+    example_body_mass_figs,
+    note_figure_pair(plot_example_body_mass(example_summary)),
+    description = "種ごとの平均体重の図（ノートの明暗表示用に 2 通り）"
   )
 )
 
@@ -76,6 +81,13 @@ if (quarto_available) {
     tarchetypes::tar_quarto(
       example_note,
       path = quarto_notes[[1]],
+      # Styling files the note reads outside its code. Without them a color
+      # change would leave the rendered note looking up to date.
+      extra_files = c(
+        "notes/_brand.yml",
+        "notes/callouts.scss",
+        "notes/_metadata.yml"
+      ),
       description = "Example 分析ノート（Data Reference Policy 実演）"
     )
   )

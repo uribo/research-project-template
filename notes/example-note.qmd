@@ -6,9 +6,7 @@ title: "Example analysis note — {{PROJECT_NAME}}"
 
 ```{r setup}
 #| include: false
-targets::tar_load(example_summary)
-# Figure theme matched to notes/_brand.yml (see the Brand colors section)
-source("../R/plot_theme.R")
+targets::tar_load(c(example_summary, example_body_mass_figs))
 
 n_species <- nrow(example_summary)
 n_obs <- sum(example_summary$n_obs)
@@ -57,9 +55,9 @@ dependency resolution all keep working.
 
 `notes/_brand.yml` sets the colors in both light and dark mode. Links and the
 table of contents take them directly; the callouts below take them through
-`notes/callouts.scss`. Figures are drawn by R, so they use `theme_note()` from
-`R/plot_theme.R`, drawn twice with `renderings: [light, dark]` so each mode shows
-its own version. Use this section to check the colors after editing
+`notes/callouts.scss`. Figures are drawn by R, so the pipeline builds each one
+twice with `note_figure_pair()` (`R/plot_theme.R`) and the chunk prints both
+under `renderings: [light, dark]`, so each mode shows its own version. Use this section to check the colors after editing
 `_brand.yml`, then delete it.
 
 ::: {.callout-note}
@@ -87,14 +85,8 @@ Important callout.
 #| renderings: [light, dark]
 #| fig-cap: "Mean body mass by species."
 #| fig-alt: "Bar chart of mean body mass in grams for each penguin species in the example data, one color per species."
-p <- ggplot2::ggplot(
-  example_summary,
-  ggplot2::aes(x = species, y = mean_body_mass_g, fill = species)
-) +
-  ggplot2::geom_col(show.legend = FALSE) +
-  ggplot2::labs(x = NULL, y = "Mean body mass (g)")
-p + theme_note("light")
-p + theme_note("dark")
+example_body_mass_figs$light
+example_body_mass_figs$dark
 ```
 
 ## Session information

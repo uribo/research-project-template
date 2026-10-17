@@ -47,3 +47,15 @@ summarise_example <- function(data) {
     ) |>
     dplyr::arrange(species)
 }
+
+#' Bar chart of mean body mass by species (example figure)
+#'
+#' Returns a plain ggplot; note_figure_pair() adds the light and dark themes.
+plot_example_body_mass <- function(summary) {
+  ggplot2::ggplot(
+    summary,
+    ggplot2::aes(x = species, y = mean_body_mass_g, fill = species)
+  ) +
+    ggplot2::geom_col(show.legend = FALSE) +
+    ggplot2::labs(x = NULL, y = "Mean body mass (g)")
+}
