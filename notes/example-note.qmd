@@ -6,7 +6,7 @@ title: "Example analysis note — {{PROJECT_NAME}}"
 
 ```{r setup}
 #| include: false
-targets::tar_load(example_summary)
+targets::tar_load(c(example_summary, example_body_mass_figs))
 
 n_species <- nrow(example_summary)
 n_obs <- sum(example_summary$n_obs)
@@ -50,6 +50,39 @@ Write cross-note links with the `.qmd` extension. The filter turns them into
 `.html` only at render time, so editing, GitHub browsing, and `tar_quarto()`
 dependency resolution all keep working.
 :::
+
+## Brand colors
+
+`notes/_brand.yml` sets the colors in both light and dark mode. Links and the table of contents take them directly; the callouts below take them through `notes/callouts.scss`. Figures are drawn by R, so the pipeline builds each one twice with `note_figure_pair()` (`R/plot_theme.R`) and the chunk prints both under `renderings: [light, dark]`, so each mode shows its own version. Use this section to check the colors after editing `_brand.yml`, then delete it.
+
+::: {.callout-note}
+Note callout.
+:::
+
+::: {.callout-tip}
+Tip callout.
+:::
+
+::: {.callout-warning}
+Warning callout.
+:::
+
+::: {.callout-caution}
+Caution callout.
+:::
+
+::: {.callout-important}
+Important callout.
+:::
+
+```{r body-mass}
+#| echo: false
+#| renderings: [light, dark]
+#| fig-cap: "Mean body mass by species."
+#| fig-alt: "Bar chart of mean body mass in grams for each penguin species in the example data, one color per species."
+example_body_mass_figs$light
+example_body_mass_figs$dark
+```
 
 ## Session information
 

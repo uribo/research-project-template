@@ -171,6 +171,7 @@ git rm SETUP.md
 - `R/data_provenance.R`（`verify_provenance()`）は汎用ヘルパー。**残す**。凍結データを使わないプロジェクトでは削除してよい
 - `R/input_guards.R` と `tests/testthat/test-input-guards.R` は汎用ヘルパーとその既知答えテスト。**残す**（example 依存なし）。入力の不在が空の結果に化けるのを止める層で、詳細は [docs/data-integrity.md](docs/data-integrity.md)。外部取得をしないプロジェクトでは `new_fetch_result()` / `summarise_fetch_results()` だけ削除してもよいが、`require_input_dir()` / `list_input_files()` はディレクトリ読み込みがある限り有用
 - `_dependencies.R` は **残す**。YAML からしか参照されないパッケージの唯一の宣言経路（現在は `notes/_metadata.yml` の `dev: ragg_png` に対する `ragg`）。`notes/` の図描画をやめて `dev` キーを外す場合のみ該当行を削除する。**このファイルを source しない・`R/` に移動しない**
+- `R/plot_theme.R`（`theme_note()` / `note_figure_pair()`）、`notes/callouts.scss`、`tests/testthat/test-plot-theme.R` は、ノートの配色（`notes/_brand.yml`）を図と callout に通す仕組み。**残す**。example の図（`plot_example_body_mass()` と `example_body_mass_figs` ターゲット）は example と一緒に消す。ggplot2 4.0 以上が前提。`_brand.yml` を外すなら 3 ファイルとも消し、`notes/_metadata.yml` の `theme:` と `_targets.R` の `extra_files` も外す（テストは `_brand.yml` を読むので、残すと落ちる）
 - `data-raw/PROVENANCE.md` は example 行を削除し、自分の生データの manifest を記入する
 - `TODO.md` は末尾の「テンプレート保守メモ」節を**丸ごと削除する**。テンプレート自身の配布台帳であり、生成先には無関係
 - `tests/testthat/test-data-provenance.R` はヘルパーを残すなら残す
