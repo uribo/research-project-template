@@ -1,27 +1,35 @@
 meta:
   name:
-    short: 0x96f Theme
-    full: 0x96f Theme
-    link: https://0x96f.dev/
+    short: uribo notes
+    full: uribo analysis notes
+  link: https://uribo.github.io/
 
-# Contrast policy (WCAG):
+# Colors follow the owner's slide style (deep green accent, red reserved for
+# warnings), so notes and talks share one accent.
+#
+# Contrast policy (WCAG), against white (#ffffff) and near-black (#1a1a1a):
 # - Body text is near-black on white / white on near-black (>=17:1, both modes).
-# - Accent roles are AA-tuned to meet AA-Large / UI (>=3.0:1) against BOTH the
-#   light (#ffffff) and dark (#1a1a1a) backgrounds. A single-valued brand token
-#   cannot reach AA-normal 4.5:1 in both modes at once (mathematical ceiling
-#   ~3.6-4.2), so links are underlined (typography.link.decoration) to stay
-#   distinguishable without relying on color alone. For strict AA-normal links,
-#   split link color per prefers-color-scheme via a theme.scss.
+# - `primary` and `danger` are split per mode (Quarto >= 1.8), so each mode gets
+#   a color that passes AA-normal 4.5:1: primary 7.9 (light) / 7.3 (dark),
+#   danger 5.3 (light) / 5.5 (dark).
+# - Palette entries used as single values (callouts, Bootstrap aliases) are
+#   tuned to AA-Large / UI (>=3.0:1) on both backgrounds. Links stay underlined
+#   so they never rely on color alone.
 # - `respect-user-color-scheme: true` in notes/_metadata.yml drives light/dark.
+# - No brand fonts: notes are `embed-resources: true`, and embedding Japanese
+#   web fonts would add megabytes to every HTML file.
 color:
   palette:
     ink: "#1a1a1a" # near-black: body text on light, page surface on dark
     paper: "#ffffff"
-    purple: "#8a7be0" # white 3.5 / dark 5.0
+    deep-green: "#2c5a43" # slide accent; white 7.9 / dark 2.2 (light mode only)
+    light-green: "#7db394" # white 2.4 / dark 7.3 (dark mode only)
+    warning-red: "#c8323f" # slide warning red; white 5.3 / dark 3.3 (light mode only)
+    light-red: "#e36a72" # white 3.2 / dark 5.5 (dark mode only)
+    green: "#5a9873" # white 3.4 / dark 5.1
+    red: "#db4a55" # white 4.1 / dark 4.3
     blue: "#2a9db8" # white 3.2 / dark 5.5
-    green: "#5a9e2f" # white 3.3 / dark 5.3
     yellow: "#b5892a" # white 3.2 / dark 5.5 (amber for legibility)
-    red: "#e05555" # white 3.8 / dark 4.6
     grey: "#8a8a8a" # white 3.5 / dark 5.0
 
     # Bootstrap color aliases
@@ -34,12 +42,16 @@ color:
   foreground:
     light: ink
     dark: paper
-  primary: purple
+  primary:
+    light: deep-green
+    dark: light-green
   secondary: grey
   success: green
   info: blue
   warning: yellow
-  danger: red
+  danger:
+    light: warning-red
+    dark: light-red
   light: paper
   dark: ink
 
