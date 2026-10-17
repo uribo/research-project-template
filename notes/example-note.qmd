@@ -51,6 +51,46 @@ Write cross-note links with the `.qmd` extension. The filter turns them into
 dependency resolution all keep working.
 :::
 
+## Brand colors
+
+`notes/_brand.yml` styles the HTML around the analysis: [links](https://quarto.org),
+the table of contents, and the five callout types below, in both light and dark
+mode. It does not reach figures: ggplot2 draws them with its own defaults, so the
+plot below keeps the default grey panel. Use this section to check the colors
+after editing `_brand.yml`, then delete it.
+
+::: {.callout-note}
+Note callout.
+:::
+
+::: {.callout-tip}
+Tip callout.
+:::
+
+::: {.callout-warning}
+Warning callout.
+:::
+
+::: {.callout-caution}
+Caution callout.
+:::
+
+::: {.callout-important}
+Important callout.
+:::
+
+```{r fig-body-mass}
+#| echo: false
+#| fig-cap: "Mean body mass by species, drawn with ggplot2 defaults."
+#| fig-alt: "Bar chart of mean body mass in grams for each penguin species in the example data."
+ggplot2::ggplot(
+  example_summary,
+  ggplot2::aes(x = species, y = mean_body_mass_g)
+) +
+  ggplot2::geom_col() +
+  ggplot2::labs(x = NULL, y = "Mean body mass (g)")
+```
+
 ## Session information
 
 Recording the environment in the rendered output makes the note
