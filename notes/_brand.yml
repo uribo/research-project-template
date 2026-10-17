@@ -12,9 +12,13 @@ meta:
 # - `primary` and `danger` are split per mode (Quarto >= 1.8), so each mode gets
 #   a color that passes AA-normal 4.5:1: primary 7.9 (light) / 7.3 (dark),
 #   danger 5.3 (light) / 5.5 (dark).
-# - Palette entries used as single values (callouts, Bootstrap aliases) are
-#   tuned to AA-Large / UI (>=3.0:1) on both backgrounds. Links stay underlined
-#   so they never rely on color alone.
+# - Single-valued palette entries (green, blue, yellow, grey) back `success`,
+#   `info`, `warning` and `secondary`, and are tuned to AA-Large / UI (>=3.0:1)
+#   on both backgrounds. Links stay underlined so they never rely on color alone.
+# - Callouts do not read these colors by themselves: notes/callouts.scss points
+#   them at the semantic colors above.
+# - Figures are drawn by R and never see this file: R/plot_theme.R repeats the
+#   values, and tests/testthat/test-plot-theme.R keeps the two in sync.
 # - `respect-user-color-scheme: true` in notes/_metadata.yml drives light/dark.
 # - No brand fonts: notes are `embed-resources: true`, and embedding Japanese
 #   web fonts would add megabytes to every HTML file.
@@ -27,7 +31,6 @@ color:
     warning-red: "#c8323f" # slide warning red; white 5.3 / dark 3.3 (light mode only)
     light-red: "#e36a72" # white 3.2 / dark 5.5 (dark mode only)
     green: "#5a9873" # white 3.4 / dark 5.1
-    red: "#db4a55" # white 4.1 / dark 4.3
     blue: "#2a9db8" # white 3.2 / dark 5.5
     yellow: "#b5892a" # white 3.2 / dark 5.5 (amber for legibility)
     grey: "#8a8a8a" # white 3.5 / dark 5.0

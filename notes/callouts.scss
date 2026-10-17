@@ -1,0 +1,10 @@
+/*-- scss:defaults --*/
+// Point callouts at the brand's semantic colors. Quarto colors callouts with
+// Bootstrap's $blue/$green/$yellow/$red, which _brand.yml palette names do not
+// reach. The semantic colors are set per color mode in _brand.yml, so this one
+// file serves both the light and the dark theme (see notes/_metadata.yml).
+// Caution keeps Bootstrap's orange so it stays distinct from warning.
+$callout-color-note: $info;
+$callout-color-tip: $success;
+$callout-color-warning: $warning;
+$callout-color-important: $danger;
